@@ -44,7 +44,7 @@ router.post('/generate', async (req, res) => {
         // ✅ SEND EMAIL VIA RESEND (TEST MODE FIX)
         let emailSent = false;
 
-        if (email === "jahnavi2645@gmail.com") {
+        if (email === "kesanisaicharan52@gmail.com") {
             const emailResult = await sendCertificateEmail({
                 email,
                 userName,

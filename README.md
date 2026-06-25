@@ -238,9 +238,9 @@ Managed deployment across multiple platforms (Vercel + Render) ensuring consiste
 
 ---
 
-# 👩‍💻 Author
+# 👨‍💻 Author
 
-**Jahnavi Polisetty**
+**Kesani Sai Charan**
 
 ---
 

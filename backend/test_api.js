@@ -1,7 +1,7 @@
 const testData = {
   userId: "9e196242-64b6-46e0-87df-9e563a184254",
-  userName: "Jahnavi",
-  email: "jahnavi2645@gmail.com",
+  userName: "Kesani Sai Charan",
+  email: "kesanisaicharan52@gmail.com",
   courseId: "69c3fa182e098811daf51ad4", // UI/UX Fundamentals
   courseTitle: "UI/UX Design Fundamentals",
   score: 95
