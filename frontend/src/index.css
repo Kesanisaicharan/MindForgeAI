@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-black;
+  }
+}
+
+/* ✅ GRAY CARD */
+.card {
+  @apply bg-gray-600 p-6 rounded-xl shadow-md;
+}
+
+/* ✅ FORCE ALL TEXT INSIDE CARD TO WHITE */
+.card * {
+  color: white !important;
+}

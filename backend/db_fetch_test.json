@@ -1,0 +1,29 @@
+﻿{
+    "success":  true,
+    "data":  [
+                 {
+                     "_id":  "69c567e3de195ff118699fc5",
+                     "certificateId":  "f5894091-2a48-46cc-ad0d-bb5afa7b3c27",
+                     "userId":  "9e196242-64b6-46e0-87df-9e563a184254",
+                     "userName":  "Jahnavi",
+                     "courseId":  "69c485f3aa68af425dca0ce9",
+                     "courseTitle":  "Java Data Structures",
+                     "score":  90,
+                     "certificateUrl":  "/certificate/69c485f3aa68af425dca0ce9?score=90",
+                     "createdAt":  "2026-03-26T17:07:47.994Z",
+                     "__v":  0
+                 },
+                 {
+                     "_id":  "69c41369d47352f596c59edc",
+                     "userId":  "9e196242-64b6-46e0-87df-9e563a184254",
+                     "userName":  "Jahnavi Jahnavi",
+                     "courseId":  "69c40c8c2e098811daf51e3e",
+                     "courseTitle":  "Comprehensive Python Guide for Beginners",
+                     "score":  80,
+                     "certificateUrl":  "/certificate/69c40c8c2e098811daf51e3e?score=80",
+                     "createdAt":  "2026-03-25T16:55:05.174Z",
+                     "__v":  0,
+                     "certificateId":  "5ffab7d8-805d-4b7b-a710-213b3036e48f"
+                 }
+             ]
+}

@@ -1,0 +1,16 @@
+﻿{
+    "value":  [
+                  {
+                      "_id":  "69c41369d47352f596c59edc",
+                      "userId":  "9e196242-64b6-46e0-87df-9e563a184254",
+                      "userName":  "Jahnavi Jahnavi",
+                      "courseId":  "69c40c8c2e098811daf51e3e",
+                      "courseTitle":  "Comprehensive Python Guide for Beginners",
+                      "score":  80,
+                      "certificateUrl":  "/certificate/69c40c8c2e098811daf51e3e?score=80",
+                      "createdAt":  "2026-03-25T16:55:05.174Z",
+                      "__v":  0
+                  }
+              ],
+    "Count":  1
+}

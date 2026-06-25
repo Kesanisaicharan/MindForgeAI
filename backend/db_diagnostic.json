@@ -1,0 +1,87 @@
+{
+  "total_certs": 2,
+  "total_courses": 11,
+  "certs": [
+    {
+      "_id": "69c41369d47352f596c59edc",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254",
+      "userName": "Jahnavi Jahnavi",
+      "courseId": "69c40c8c2e098811daf51e3e",
+      "courseTitle": "Comprehensive Python Guide for Beginners",
+      "score": 80,
+      "certificateUrl": "/certificate/69c40c8c2e098811daf51e3e?score=80",
+      "createdAt": "2026-03-25T16:55:05.174Z",
+      "__v": 0,
+      "certificateId": "5ffab7d8-805d-4b7b-a710-213b3036e48f"
+    },
+    {
+      "_id": "69c567e3de195ff118699fc5",
+      "certificateId": "f5894091-2a48-46cc-ad0d-bb5afa7b3c27",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254",
+      "userName": "Jahnavi",
+      "courseId": "69c485f3aa68af425dca0ce9",
+      "courseTitle": "Java Data Structures",
+      "score": 90,
+      "certificateUrl": "/certificate/69c485f3aa68af425dca0ce9?score=90",
+      "createdAt": "2026-03-26T17:07:47.994Z",
+      "__v": 0
+    }
+  ],
+  "courses": [
+    {
+      "id": "69c2bf0454ccbde0a81f7475",
+      "title": "UI/UX Design Fundamentals",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c2c2b654ccbde0a81f74ce",
+      "title": "Python Data Structures",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c3e6225f392859acb25d43",
+      "title": "Java Programming Fundamentals",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c3e9df2e098811daf5118d",
+      "title": "UI/UX Design Fundamentals",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c3f9d32e098811daf5158b",
+      "title": "UI/UX Design Fundamentals",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c3fa182e098811daf51ad4",
+      "title": "UI/UX Design Fundamentals",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c40c8c2e098811daf51e3e",
+      "title": "Comprehensive Python Guide for Beginners",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c40cc32e098811daf51f2f",
+      "title": "UI/UX Design Fundamentals",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c485f3aa68af425dca0ce9",
+      "title": "Java Data Structures",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c5393db3833f94c9d8dbb8",
+      "title": "Mastering Content Creation on Social Media",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    },
+    {
+      "id": "69c546edb3833f94c9d90204",
+      "title": "Foundations of Computer Science",
+      "userId": "9e196242-64b6-46e0-87df-9e563a184254"
+    }
+  ]
+}
