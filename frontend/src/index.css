@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300;
+  }
+}
+
+/* ✅ Modern Glassmorphism System */
+.card-glass {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+}
+
+.dark .card-glass {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Glow Effect */
+.glow-effect {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.glow-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: 0.75s;
+  opacity: 0;
+}
+
+.glow-effect:hover::after {
+  opacity: 1;
+  left: 125%;
+}
+
+.glow-shadow-blue {
+  box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.45);
+}
+
+.glow-shadow-purple {
+  box-shadow: 0 0 25px -5px rgba(168, 85, 247, 0.45);
+}
+
+/* Custom Scrollbar for premium feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.45);
+}
