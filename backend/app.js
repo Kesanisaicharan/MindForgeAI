@@ -46,6 +46,8 @@ app.use('/api/curriculum', curriculumRoutes);
 
 app.use((req, res) => res.status(404).json({ success: false, error: 'Endpoint not found.' }));
 app.use((error, _req, res, _next) => {
+    if (error?.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ success: false, error: 'Uploaded documents must be 8 MB or smaller.' });
+    if (error?.code === 'LIMIT_FILE_COUNT' || error?.code === 'LIMIT_UNEXPECTED_FILE') return res.status(400).json({ success: false, error: 'Upload exactly one document using the file field.' });
     if (error?.type === 'entity.too.large') {
         return res.status(413).json({ success: false, error: 'Request body is too large.' });
     }
