@@ -1,5 +1,9 @@
 name: MindForgeAI CI
 
+concurrency:
+  group: mindforgeai-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main, "feature/**"]
@@ -9,6 +13,7 @@ on:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,7 +23,7 @@ jobs:
           node-version: 22
       - name: Install backend dependencies
         working-directory: backend
-        run: npm install
+        run: npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=60000
       - name: Run backend tests
         working-directory: backend
         run: npm test
