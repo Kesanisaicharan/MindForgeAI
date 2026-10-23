@@ -14,6 +14,7 @@ export default function TeacherDashboard() {
     const [overview, setOverview] = useState([]);
     const [selectedRoster, setSelectedRoster] = useState('');
     const [source, setSource] = useState(emptySource);
+    const [bulkChunks, setBulkChunks] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -44,6 +45,33 @@ export default function TeacherDashboard() {
         } catch (e) { setError(e.response?.data?.error || 'Could not load class overview.'); }
         finally { setLoading(false); }
     };
+
+    const importBulkFile = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        setError(''); setMessage('');
+        try {
+            const parsed = JSON.parse(await file.text());
+            const chunks = Array.isArray(parsed) ? parsed : parsed.chunks;
+            if (!Array.isArray(chunks) || chunks.length < 1 || chunks.length > 100) {
+                throw new Error('JSON must contain an array of 1–100 curriculum chunks (or { "chunks": [...] }).');
+            }
+            setBulkChunks(chunks);
+            setMessage(`Loaded ${chunks.length} chunks from JSON. Review the file before importing.`);
+        } catch (e) {
+            setBulkChunks([]);
+            setError(e.message || 'Could not read JSON file.');
+        } finally { event.target.value = ''; }
+    };
+    const submitBulkImport = async () => {
+        setError(''); setMessage('');
+        try {
+            const r = await api.post(`${API}/api/curriculum/chunks/bulk`, { chunks: bulkChunks });
+            setMessage(`Imported ${r.data.count} reviewed curriculum chunks.`);
+            setBulkChunks([]);
+        } catch (e) { setError(e.response?.data?.error || 'Bulk import failed.'); }
+    };
+
     const saveSource = async (e) => {
         e.preventDefault(); setError(''); setMessage('');
         try {
@@ -62,6 +90,7 @@ export default function TeacherDashboard() {
             {rosters.length>0 && <div className="flex flex-wrap gap-2">{rosters.map(r=><button key={r._id} onClick={()=>loadOverview(r._id)} className={`rounded-xl px-4 py-2 border ${selectedRoster===r._id?'bg-primary text-white':'border-gray-300 dark:border-gray-700'}`}>{r.name} ({r.studentIds.length})</button>)}</div>}
         </section>
         <section className="card-glass rounded-2xl p-6 space-y-4"><h2 className="text-xl font-bold">Student learning overview</h2>{loading?<Loader2 className="animate-spin"/>:overview.length===0?<p className="text-sm text-gray-500">Select a roster to view learners and concepts needing support.</p>:<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">{overview.map(s=><article key={s.studentId} className="rounded-xl border border-gray-200 dark:border-gray-700 p-4"><p className="font-bold break-all">{s.studentId}</p><p className="text-sm text-gray-500">Class {s.grade} · {s.board} · {s.totalAttempts} answers</p><p className="mt-3 text-sm font-semibold">Mastered topics: {s.masteredTopics}</p><p className="text-sm font-semibold text-amber-600 mt-2">Needs support: {s.needsSupport.length}</p>{s.needsSupport.map(topic=><p key={topic.topicId} className="text-xs mt-1 break-all">{topic.topicId} — {Math.round(topic.masteryProbability*100)}% estimated mastery</p>)}</article>)}</div>}</section>
+        <section className="card-glass rounded-2xl p-6 space-y-4"><h2 className="text-xl font-bold">Bulk curriculum import (JSON)</h2><p className="text-sm text-gray-500">Prepare a JSON array with title, text, grade, board, subject, language, sourceTitle, sourceUrl and page. Import up to 100 chunks per batch. Only upload teacher-reviewed content you are allowed to use.</p><input type="file" accept=".json,application/json" onChange={importBulkFile} className="block w-full text-sm"/>{bulkChunks.length>0 && <div className="flex items-center justify-between gap-3"><p className="text-sm">{bulkChunks.length} chunks ready to import</p><button onClick={submitBulkImport} className="rounded-xl bg-primary text-white px-5 py-3 font-bold">Import {bulkChunks.length} chunks</button></div>}<details><summary className="cursor-pointer text-sm underline">Show JSON format</summary><pre className="text-xs whitespace-pre-wrap mt-3 p-3 rounded-xl bg-gray-100 dark:bg-gray-900">{JSON.stringify({chunks:[{title:"Fractions",text:"Teacher-reviewed excerpt text",grade:6,board:"CBSE",subject:"Mathematics",language:"en",sourceTitle:"Textbook name",sourceUrl:"https://example.org/source",page:"12"}]},null,2)}</pre></details></section>
         <section className="card-glass rounded-2xl p-6 space-y-4"><h2 className="text-xl font-bold flex items-center gap-2"><BookOpen/> Add reviewed curriculum excerpt</h2><p className="text-sm text-gray-500">Use content you have permission to use, verify its board/class/language, and cite the actual textbook or source. This is an excerpt importer, not a complete syllabus uploader.</p>
             <form onSubmit={saveSource} className="grid md:grid-cols-2 gap-4">
                 <label className="text-sm font-semibold">Excerpt title<input required maxLength={180} value={source.title} onChange={e=>setSource({...source,title:e.target.value})} className="mt-2 w-full p-3 rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-700"/></label>
