@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../lib/api';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle, Loader2, Trophy } from 'lucide-react';
 
@@ -13,42 +13,29 @@ const Quiz = () => {
     const [answers, setAnswers] = useState({});
     const [submitted, setSubmitted] = useState(false);
     const [score, setScore] = useState(0);
+    const [quizId, setQuizId] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchQuiz = async () => {
             try {
-                const API = import.meta.env.VITE_API_URL;
-                const response = await axios.post(`${API}/api/quiz/generate`, 
+                const API = import.meta.env.VITE_API_URL || '';
+                const response = await apiClient.post(`${API}/api/quiz/generate`, 
                     { courseId },
                     { timeout: 15000 } // Add 15 second timeout to prevent infinite loading
                 );
                 
                 if (response.data.success && response.data.data) {
                     const data = response.data.data;
-                    let questions = [];
-
-                    // 🛠️ Handle both object wrapper and naked array
-                    if (Array.isArray(data)) {
-                        questions = data;
-                    } else {
-                        questions = data.questions || data.Questions || data.quiz || data.Quiz;
-                        
-                        // If still not found, check if any key contains an array
-                        if (!questions || !Array.isArray(questions)) {
-                            const firstArrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
-                            if (firstArrayKey) questions = data[firstArrayKey];
-                        }
-                    }
-
-                    if (questions && Array.isArray(questions) && questions.length > 0) {
-                        // Normalize the question objects
-                        const normalizedQuiz = questions.map(q => ({
-                            question: q.question || q.QuestionText || q.question_text || q.text,
-                            options: q.options || q.Options || q.choices || q.answers,
-                            correctAnswer: q.answer || q.correctAnswer || q.CorrectAnswer || q.answer_text || (typeof q.CorrectAnswerIndex === 'number' ? (q.options || q.Options)[q.CorrectAnswerIndex] : null),
-                            explanation: q.explanation || q.Explanation || ""
-                        }));
-                        setQuiz(normalizedQuiz);
+                    const questions = data?.questions;
+                    if (data?.quizId && Array.isArray(questions) && questions.length > 0) {
+                        setQuizId(data.quizId);
+                        setQuiz(questions.map(q => ({
+                            question: q.question,
+                            options: q.options,
+                            correctAnswer: null,
+                            explanation: ''
+                        })));
                     } else {
                         setError('Failed to load quiz or invalid data format received.');
                     }
@@ -100,18 +87,29 @@ const Quiz = () => {
         return isIndexMatch;
     };
 
-    const handleSubmit = () => {
-        let correctOptionsCount = 0;
-        
-        quiz.forEach((_, idx) => {
-            if (isAnswerCorrect(idx, answers[idx])) {
-                correctOptionsCount++;
-            }
-        });
-        
-        const calculatedScore = Math.round((correctOptionsCount / quiz.length) * 100);
-        setScore(calculatedScore);
-        setSubmitted(true);
+    const handleSubmit = async () => {
+        if (!quizId || Object.keys(answers).length !== quiz.length) return;
+        setSubmitting(true);
+        setError('');
+        try {
+            const API = import.meta.env.VITE_API_URL || '';
+            const response = await apiClient.post(`${API}/api/quiz/submit`, {
+                quizId,
+                answers: quiz.map((_, idx) => answers[idx])
+            });
+            const result = response.data.data;
+            setQuiz(previous => previous.map((q, idx) => ({
+                ...q,
+                correctAnswer: result.results[idx]?.correctAnswer,
+                explanation: result.results[idx]?.explanation || ''
+            })));
+            setScore(result.score);
+            setSubmitted(true);
+        } catch (err) {
+            setError(err.response?.data?.error || 'Could not submit quiz. Please retry.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const handleClaimCertificate = () => {
@@ -229,14 +227,14 @@ const Quiz = () => {
                 <div className="mt-10 text-center">
                     <button 
                         onClick={handleSubmit}
-                        disabled={Object.keys(answers).length !== quiz.length}
+                        disabled={submitting || Object.keys(answers).length !== quiz.length}
                         className={`py-4 px-12 rounded-xl text-lg font-bold transition-all ${
                             Object.keys(answers).length === quiz.length
                             ? 'bg-primary text-white hover:bg-secondary glow-effect'
                             : 'bg-gray-800 text-gray-500 cursor-not-allowed'
                         }`}
                     >
-                        Submit Quiz
+                        {submitting ? 'Submitting…' : 'Submit Quiz'}
                     </button>
                 </div>
             )}

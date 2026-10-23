@@ -4,7 +4,7 @@ import Course from '../models/Course.model.js';
 // ✅ COURSE GENERATION
 export const generateCourse = async (req, res) => {
     try {
-        const { prompt, userId } = req.body;
+        const { prompt } = req.body;
 
         if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
             return res.status(400).json({ error: 'Prompt is required' });
@@ -16,7 +16,7 @@ export const generateCourse = async (req, res) => {
             title: courseData.Title,
             description: courseData.Description,
             modules: courseData.Modules,
-            userId: userId || 'anonymous'
+            userId: req.user.id
         });
 
         const savedCourse = await newCourse.save();
@@ -25,7 +25,8 @@ export const generateCourse = async (req, res) => {
 
     } catch (error) {
         console.error('Error generating course:', error);
-        res.status(500).json({ error: 'Course generation failed' });
+        const status = error.status || 502;
+        res.status(status).json({ error: status === 503 ? 'AI provider is not configured.' : 'Course generation failed' });
     }
 };
 
@@ -45,8 +46,11 @@ export const generateQuiz = async (req, res) => {
         if (!course) {
             return res.status(404).json({ error: 'Course not found' });
         }
+        if (course.userId !== req.user.id) {
+            return res.status(403).json({ error: 'You can only quiz on your own courses.' });
+        }
 
-        console.log("Course found:", course.title);
+        // Avoid logging user course content in application logs.
 
         // Extract only: Title, summary (150 chars), keypoints (max 5)
         let trimmedContent = "";
@@ -66,17 +70,7 @@ export const generateQuiz = async (req, res) => {
             trimmedContent = `Topic: ${course.title}\nDescription: ${course.description?.substring(0, 200)}`;
         }
 
-        console.log("--- START TRIMMED CONTENT ---");
-        console.log(trimmedContent);
-        console.log("--- END TRIMMED CONTENT ---");
-
-        console.log("Sending trimmed content to AI...", { length: trimmedContent.length });
-
         const quizData = await generateQuizFromCourse(course.title, trimmedContent);
-
-        console.log("Quiz Data generated successfully:", JSON.stringify(quizData).slice(0, 500));
-
-        console.log("Quiz generated");
 
         res.status(200).json({
             success: true,
@@ -85,6 +79,7 @@ export const generateQuiz = async (req, res) => {
 
     } catch (error) {
         console.error('Error generating quiz:', error);
-        res.status(500).json({ error: 'Quiz generation failed' });
+        const status = error.status || 502;
+        res.status(status).json({ error: status === 503 ? 'AI provider is not configured.' : 'Quiz generation failed' });
     }
 };

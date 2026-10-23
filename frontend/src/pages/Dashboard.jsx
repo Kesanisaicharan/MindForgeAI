@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../lib/api';
 import { motion } from 'framer-motion';
-import { Book, PlusCircle, ArrowRight, Loader2, Award } from 'lucide-react';
+import { Book, PlusCircle, ArrowRight, Loader2, Award, ClipboardList } from 'lucide-react';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -30,10 +30,10 @@ const Dashboard = () => {
             console.log("DASHBOARD: Fetching for user ID:", activeUserId);
 
             try {
-                const API = import.meta.env.VITE_API_URL;
+                const API = import.meta.env.VITE_API_URL || '';
                 const [coursesRes, certsRes] = await Promise.all([
-                    axios.get(`${API}/api/courses/user/${activeUserId}`),
-                    axios.get(`${API}/api/certificates/${activeUserId}`)
+                    apiClient.get(`${API}/api/courses/user/${activeUserId}`),
+                    apiClient.get(`${API}/api/certificates/${activeUserId}`)
                 ]);
 
                 if (coursesRes.data.success) {
@@ -94,6 +94,14 @@ const Dashboard = () => {
                     <PlusCircle size={20} />
                     New Course
                 </button>
+            </div>
+
+            <div className="mb-10 rounded-2xl border border-primary/20 bg-primary/5 p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-start gap-3">
+                    <ClipboardList className="text-primary mt-1" size={26}/>
+                    <div><h2 className="text-xl font-bold">Teacher-assigned assessments</h2><p className="text-sm text-gray-500 mt-1">Take class assessments and review your results.</p></div>
+                </div>
+                <button onClick={() => navigate('/assessments')} className="rounded-xl bg-primary text-white px-5 py-3 font-bold inline-flex items-center justify-center gap-2">View assessments <ArrowRight size={18}/></button>
             </div>
 
             {/* Courses Section */}
@@ -168,7 +176,7 @@ const Dashboard = () => {
                                     <p className="text-gray-400 text-sm mb-2">Score: <span className="text-green-400 font-bold">{cert.score}%</span> • Issued: {new Date(cert.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <button
-                                    onClick={() => navigate.open(cert.certificateUrl || `/certificate/${cert.courseId}?score=${cert.score}`, '_blank')}
+                                    onClick={() => window.open(cert.certificateUrl || `/certificate/${cert.courseId}?score=${cert.score}`, '_blank', 'noopener,noreferrer')}
                                     className="bg-primary/20 hover:bg-primary/40 text-primary border border-primary/30 px-4 py-2 rounded-lg text-sm font-bold transition-all"
                                 >
                                     View Certificate

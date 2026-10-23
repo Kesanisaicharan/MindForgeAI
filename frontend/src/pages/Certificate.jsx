@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../lib/api';
 import { motion } from 'framer-motion';
 import { Award, Loader2, MailCheck, Share2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,7 +13,8 @@ const Certificate = () => {
 
     // Extract score from URL query params
     const searchParams = new URLSearchParams(location.search);
-    const score = Number(searchParams.get('score')) || 100;
+    const score = Number(searchParams.get('score')) || 0;
+    const [issuedScore, setIssuedScore] = useState(score);
 
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,9 +24,10 @@ const Certificate = () => {
 
     // RESET generation state when course ID or search params (score/timestamp) change
     useEffect(() => {
-        console.log('CERTIFICATE: Route changed, resetting generation state.');
+        // Reset the certificate view when the route changes.
         hasGenerated.current = false;
         setEmailSent(false);
+        setIssuedScore(score);
         setCourse(null);
         setLoading(true);
     }, [id, location.search]);
@@ -34,8 +36,8 @@ const Certificate = () => {
     useEffect(() => {
         const fetchCourse = async () => {
             try {
-                const API = import.meta.env.VITE_API_URL;
-                const response = await axios.get(`${API}/api/ai/course/${id}`);
+                const API = import.meta.env.VITE_API_URL || '';
+                const response = await apiClient.get(`${API}/api/ai/course/${id}`);
                 if (response.data.success) {
                     setCourse(response.data.data);
                 }
@@ -58,22 +60,15 @@ const Certificate = () => {
                 hasGenerated.current = true;
                 setGenerating(true);
 
-                const activeUserId = user._id || user.id || user.uid || 'anonymous';
-                console.log("📧 Attempting to send email to:", user.email);
-
-                const API = import.meta.env.VITE_API_URL;
-                const response = await axios.post(`${API}/api/certificates/generate`, {
-                    userId: activeUserId,
-                    userName: user?.user_metadata?.full_name || user?.displayName || 'Valued Student',
-                    email: user?.email, // Added user email
-                    courseId: id,
-                    courseTitle: course.title,
-                    score: score
-                });
+                const API = import.meta.env.VITE_API_URL || '';
+                // The server derives the user identity and checks the saved quiz score.
+                // Never trust a client-supplied user, email, course title, or score for issuance.
+                const response = await apiClient.post(`${API}/api/certificates/generate`, { courseId: id });
 
                 if (response.data.success) {
+                    setIssuedScore(response.data.data.score);
                     setEmailSent(true);
-                    console.log('CERTIFICATE: Saved successfully');
+    
                 }
             } catch (err) {
                 console.error('Error generating certificate:', err);
@@ -89,7 +84,6 @@ const Certificate = () => {
     }, [course, user, id, score]);
 
     const handleLinkedInShare = () => {
-        const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`;
         const message = `I just completed "${course.title}" using MindForgeAI 🚀`;
         const linkedinUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(message)}`;
         window.open(linkedinUrl, '_blank');
@@ -138,7 +132,7 @@ const Certificate = () => {
                     </h3>
 
                     <p className="text-lg text-gray-500 mb-10">
-                        Achieving a quiz score of <span className="font-bold text-black">{score}%</span> demonstrating excellent comprehension.
+                        Achieving a quiz score of <span className="font-bold text-black">{issuedScore}%</span> demonstrating excellent comprehension.
                     </p>
 
                     <div className="flex justify-between w-full mt-10 px-10 items-end">

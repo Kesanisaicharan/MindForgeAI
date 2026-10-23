@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log*
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+db_*.json
+db_output.txt
+test_api.js
+deep_fix.js
+fix_index.js
+tests
