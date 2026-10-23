@@ -30,7 +30,7 @@ const Dashboard = () => {
             console.log("DASHBOARD: Fetching for user ID:", activeUserId);
 
             try {
-                const API = import.meta.env.VITE_API_URL;
+                const API = import.meta.env.VITE_API_URL || '';
                 const [coursesRes, certsRes] = await Promise.all([
                     apiClient.get(`${API}/api/courses/user/${activeUserId}`),
                     apiClient.get(`${API}/api/certificates/${activeUserId}`)
