@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { BookOpen, BrainCircuit, CheckCircle2, CircleAlert, Languages, Loader2, RefreshCw, Target } from 'lucide-react';
@@ -75,7 +75,7 @@ const AdaptiveLearning = () => {
             for (const item of queued) {
                 try {
                     const { savedAt, ...attempt } = item;
-                    await axios.post(`${api}/api/adaptive/attempt`, attempt);
+                    await api.post(`${api}/api/adaptive/attempt`, attempt);
                 } catch {
                     remaining.push(item);
                 }
@@ -83,7 +83,7 @@ const AdaptiveLearning = () => {
             if (remaining.length) localStorage.setItem(pendingKey, JSON.stringify(remaining));
             else localStorage.removeItem(pendingKey);
 
-            const response = await axios.get(`${api}/api/adaptive/plan/${encodeURIComponent(studentId)}`, {
+            const response = await api.get(`${api}/api/adaptive/plan/${encodeURIComponent(studentId)}`, {
                 params: { grade, board, language, subject }
             });
             setPlan(response.data.data);
