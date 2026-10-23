@@ -1,6 +1,8 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+})[character]);
 
 /**
  * Sends a certificate completion email using Resend API
@@ -17,16 +19,20 @@ export const sendCertificateEmail = async ({ email, userName, courseTitle, score
             return { success: false, error: "API Key missing" };
         }
 
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const safeUserName = escapeHtml(String(userName || 'Student').slice(0, 120));
+        const safeCourseTitle = escapeHtml(String(courseTitle || 'Course').slice(0, 200));
+        const safeSubjectName = String(userName || 'Student').replace(/[\r\n]+/g, ' ').slice(0, 120);
         const { data, error } = await resend.emails.send({
             from: 'MindForgeAI <onboarding@resend.dev>', // Update this with a verified domain in production
             to: [email],
-            subject: `🎉 Congratulations ${userName}! Your Certificate is Ready`,
+            subject: `🎉 Congratulations ${safeSubjectName}! Your Certificate is Ready`,
             html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; background-color: #f9f9f9; border-radius: 12px; max-width: 600px; margin: auto;">
-                <h2 style="color: #3B82F6; text-align: center;">Congratulations ${userName}!</h2>
+                <h2 style="color: #3B82F6; text-align: center;">Congratulations ${safeUserName}!</h2>
                 <p style="font-size: 16px; line-height: 1.5; text-align: center;">
                     You have successfully completed the course:<br>
-                    <b style="font-size: 20px; color: #1F2937;">${courseTitle}</b>
+                    <b style="font-size: 20px; color: #1F2937;">${safeCourseTitle}</b>
                 </p>
                 <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
                 <div style="text-align: center; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
