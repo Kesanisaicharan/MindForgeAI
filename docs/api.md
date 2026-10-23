@@ -115,7 +115,7 @@ Document upload is limited to one file up to 8 MB and extensions `.pdf`, `.txt`,
 - `POST /api/certificates/generate` — accepts a course ID; the server checks the authenticated user's saved quiz score (at least 80%) before issuing a certificate. Client-supplied score/name/email are not authoritative.
 - `GET /api/certificates/:userId` — list the authenticated user's certificates; path ID must match.
 
-## Common status behavior
+## Offline behavior\n\nThe frontend service worker caches the app shell/static assets and never caches authenticated API responses. The adaptive-learning page stores its per-user plan and queued answer records in browser local storage; answer retries include idempotency keys. This does not provide offline sign-in, guarantee storage across cleared browser data, or cache every API resource.\n\n## Common status behavior
 
 - `400` invalid or missing input.
 - `401` missing/invalid/expired authentication.
