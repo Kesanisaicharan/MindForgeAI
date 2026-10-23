@@ -13,7 +13,8 @@ const Certificate = () => {
 
     // Extract score from URL query params
     const searchParams = new URLSearchParams(location.search);
-    const score = Number(searchParams.get('score')) || 100;
+    const score = Number(searchParams.get('score')) || 0;
+    const [issuedScore, setIssuedScore] = useState(score);
 
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -26,6 +27,7 @@ const Certificate = () => {
         console.log('CERTIFICATE: Route changed, resetting generation state.');
         hasGenerated.current = false;
         setEmailSent(false);
+        setIssuedScore(score);
         setCourse(null);
         setLoading(true);
     }, [id, location.search]);
@@ -72,6 +74,7 @@ const Certificate = () => {
                 });
 
                 if (response.data.success) {
+                    setIssuedScore(response.data.data.score);
                     setEmailSent(true);
                     console.log('CERTIFICATE: Saved successfully');
                 }
@@ -138,7 +141,7 @@ const Certificate = () => {
                     </h3>
 
                     <p className="text-lg text-gray-500 mb-10">
-                        Achieving a quiz score of <span className="font-bold text-black">{score}%</span> demonstrating excellent comprehension.
+                        Achieving a quiz score of <span className="font-bold text-black">{issuedScore}%</span> demonstrating excellent comprehension.
                     </p>
 
                     <div className="flex justify-between w-full mt-10 px-10 items-end">
