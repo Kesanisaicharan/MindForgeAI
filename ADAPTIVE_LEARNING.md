@@ -74,7 +74,7 @@ The teacher dashboard accepts a JSON array or an object with a chunks array, up 
   "page": "12"
 }
 ```
-Use only curriculum material you are allowed to use. Keep the actual source title, page/section and a valid HTTPS URL where available. Add separate translated excerpts for hi and te so the RAG tutor can retrieve reliable content in those languages.
+Use only curriculum material you are allowed to use. Keep the actual source title, page/section and a valid HTTPS URL where available. Add separate translated excerpts for hi and te so the RAG tutor can retrieve reliable content in those languages. Official portals to verify content: https://ncert.nic.in/textbook.php, https://epathshala.nic.in/epathshala.php?id=Students&ln=en, and https://ncert.nic.in/syllabus_nep.php?ln=en. NCERT's textbook pages state that the content is copyrighted and use in digital content packages/software is restricted; do not copy textbook text into this app unless the applicable license or written permission allows that use. Store source links and teacher-authored notes where reuse rights are unclear.
 
 ## Important limitations before classroom deployment
 
