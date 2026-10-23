@@ -11,6 +11,8 @@ const skillSchema = new mongoose.Schema({
 const attemptSchema = new mongoose.Schema({
     topicId: { type: String, required: true },
     questionId: { type: String, required: true },
+    answerIndex: { type: Number, min: 0 },
+    clientAttemptId: { type: String, default: null, maxlength: 100 },
     isCorrect: { type: Boolean, required: true },
     difficulty: { type: Number, default: 1 },
     answeredAt: { type: Date, default: Date.now }
