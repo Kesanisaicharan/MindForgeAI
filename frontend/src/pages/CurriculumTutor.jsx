@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { BookOpenCheck, Loader2, Send } from 'lucide-react';
@@ -8,11 +8,13 @@ export default function CurriculumTutor() {
     const [grade, setGrade] = useState(6);
     const [board, setBoard] = useState('CBSE');
     const [subject, setSubject] = useState('Mathematics');
-    const [language, setLanguage] = useState('en');
+    const [language, setLanguage] = useState(() => localStorage.getItem('mindforge-language') || 'en');
     const [query, setQuery] = useState('');
     const [answer, setAnswer] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => { localStorage.setItem('mindforge-language', language); }, [language]);
 
     const ask = async (event) => {
         event.preventDefault();
