@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Sun, Moon, BrainCircuit, BookOpen } from 'lucide-react';
+import { Sun, Moon, BrainCircuit, BookOpen, ClipboardList, GraduationCap } from 'lucide-react';
 
 const Navbar = () => {
     const { user, loginWithGoogle, logout } = useAuth();
@@ -59,6 +59,8 @@ const Navbar = () => {
                             <Link to="/generate" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">Generate</Link>
                             <Link to="/adaptive" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium flex items-center gap-1"><BookOpen size={16}/> Adaptive Learning</Link>
                             <Link to="/tutor" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">Curriculum Tutor</Link>
+                            <Link to="/assessments" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium flex items-center gap-1"><ClipboardList size={16}/> Assessments</Link>
+                            <Link to="/teacher" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium flex items-center gap-1"><GraduationCap size={16}/> Teacher</Link>
                         </>
                     )}
                     
