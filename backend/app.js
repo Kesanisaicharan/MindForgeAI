@@ -27,7 +27,7 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '2mb' }));
 app.use(rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 300,
