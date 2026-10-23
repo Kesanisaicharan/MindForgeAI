@@ -275,7 +275,21 @@ This branch includes a new adaptive-learning MVP for the Canvas Classes challeng
 
 **Important:** this repository does not contain a complete official CBSE/ICSE/State Board syllabus. Teachers must import and verify curriculum content they are permitted to use. Machine translations and mastery estimates require educator review. Configure the backend's SUPABASE_URL and SUPABASE_ANON_KEY, plus TEACHER_USER_IDS or a server-managed Supabase app_metadata role for teacher access.
 
-See [ADAPTIVE_LEARNING.md](./ADAPTIVE_LEARNING.md) for setup, JSON import format, routes, security and known limitations.
+See [ADAPTIVE_LEARNING.md](./ADAPTIVE_LEARNING.md) for setup, JSON/document import formats, offline behavior, security and known limitations. See [docs/api.md](./docs/api.md) for endpoint contracts.
+
+## Local Docker Compose stack (optional)
+
+The repository includes a local MongoDB + backend + frontend Compose stack. From the repository root in PowerShell:
+
+```powershell
+Copy-Item .env.docker.example .env
+Copy-Item backend/.env.example backend/.env
+# Edit .env with your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.
+# Edit backend/.env with your Supabase, Groq and optional Resend configuration.
+docker compose up --build
+```
+
+Open the frontend at `http://localhost:4173` and the backend health endpoint at `http://localhost:5000/health`. The MongoDB data volume persists between restarts. The sample Supabase values are placeholders; sign-in and protected API calls require your real Supabase project configuration. Never commit either local `.env` file.
 
 ## New pages
 
