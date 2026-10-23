@@ -170,12 +170,18 @@ export const getLearningPlan = async ({ studentId, grade, board, language, subje
     };
 };
 
-export const submitLearningAttempt = async ({ studentId, grade, board, language, topicId, questionId, answerIndex }) => {
+export const submitLearningAttempt = async ({ studentId, grade, board, language, subject, topicId, questionId, answerIndex, clientAttemptId }) => {
     if (!studentId || !topicId || !questionId || !Number.isInteger(answerIndex) || answerIndex < 0) {
         const error = new Error('studentId, topicId, questionId, and integer answerIndex are required.');
         error.status = 400;
         throw error;
     }
+    if (clientAttemptId !== undefined && (typeof clientAttemptId !== 'string' || clientAttemptId.length < 8 || clientAttemptId.length > 100)) {
+        const error = new Error('clientAttemptId must be a string between 8 and 100 characters.');
+        error.status = 400;
+        throw error;
+    }
+
     const topic = getTopic(topicId);
     const question = getQuestion(topicId, questionId);
     if (!topic || !question) {
@@ -191,6 +197,34 @@ export const submitLearningAttempt = async ({ studentId, grade, board, language,
     }
 
     const profile = await getOrCreateProfile({ studentId, grade: grade || topic.grade, board, language });
+    const priorAttempt = clientAttemptId && profile.attempts.find((attempt) => attempt.clientAttemptId === clientAttemptId);
+    if (priorAttempt) {
+        if (priorAttempt.topicId !== topicId || priorAttempt.questionId !== questionId || priorAttempt.answerIndex !== answerIndex) {
+            const error = new Error('clientAttemptId has already been used for a different answer.');
+            error.status = 409;
+            throw error;
+        }
+        const repeatedSkill = profile.skills.find((item) => item.topicId === topicId);
+        const repeatedText = await translatePayload({
+            correctAnswer: question.options[question.answerIndex],
+            explanation: question.explanation
+        }, language || profile.preferredLanguage);
+        const repeatedPlan = await getLearningPlan({
+            studentId, grade: grade || profile.grade, board: board || profile.board,
+            language: language || profile.preferredLanguage, subject
+        });
+        return {
+            isCorrect: priorAttempt.isCorrect,
+            correctAnswer: repeatedText.correctAnswer || question.options[question.answerIndex],
+            explanation: repeatedText.explanation || question.explanation,
+            masteryProbability: Number((repeatedSkill?.masteryProbability ?? DEFAULT_MASTERY).toFixed(2)),
+            attempts: repeatedSkill?.attempts ?? 0,
+            recommendation: repeatedPlan.recommendation,
+            summary: repeatedPlan.summary,
+            duplicate: true
+        };
+    }
+
     let skill = profile.skills.find(s => s.topicId === topicId);
     if (!skill) {
         profile.skills.push({ topicId, masteryProbability: DEFAULT_MASTERY, attempts: 0, correct: 0 });
@@ -202,7 +236,7 @@ export const submitLearningAttempt = async ({ studentId, grade, board, language,
     skill.attempts += 1;
     if (isCorrect) skill.correct += 1;
     skill.lastPracticedAt = new Date();
-    profile.attempts.push({ topicId, questionId, isCorrect, difficulty: question.difficulty, answeredAt: new Date() });
+    profile.attempts.push({ topicId, questionId, answerIndex, clientAttemptId, isCorrect, difficulty: question.difficulty, answeredAt: new Date() });
     // Keep a bounded recent history to avoid unbounded document growth.
     if (profile.attempts.length > 500) profile.attempts = profile.attempts.slice(-500);
     await profile.save();
@@ -211,7 +245,7 @@ export const submitLearningAttempt = async ({ studentId, grade, board, language,
         correctAnswer: question.options[question.answerIndex],
         explanation: question.explanation
     }, language || profile.preferredLanguage);
-    const nextPlan = await getLearningPlan({ studentId, grade: grade || profile.grade, board: board || profile.board, language: language || profile.preferredLanguage });
+    const nextPlan = await getLearningPlan({ studentId, grade: grade || profile.grade, board: board || profile.board, language: language || profile.preferredLanguage, subject });
     return {
         isCorrect,
         correctAnswer: responseText.correctAnswer || question.options[question.answerIndex],
