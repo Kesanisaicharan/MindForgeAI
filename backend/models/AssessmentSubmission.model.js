@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const resultSchema = new mongoose.Schema({
     topicId: { type: String, required: true },
     questionId: { type: String, required: true },
+    question: { type: String, required: true },
     selectedAnswer: { type: String, required: true },
     correctAnswer: { type: String, required: true },
     explanation: { type: String, default: '' },
