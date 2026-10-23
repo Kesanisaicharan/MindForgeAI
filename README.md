@@ -209,7 +209,7 @@ npm run dev
 
 ## 🔐 Secure Environment Management
 
-Handled sensitive API keys securely by removing `.env` from Git history and configuring environment variables directly on deployment platforms.
+Environment templates contain placeholders, and `.env` files are ignored by Git. Configure live credentials in the relevant hosting platform. Do not assume old repository history has been scrubbed; rotate any credential that was ever committed.
 
 ## 🌐 Frontend-Backend Integration
 
@@ -268,7 +268,8 @@ This branch includes a new adaptive-learning MVP for the Canvas Classes challeng
 - Personalized topic practice, prerequisite-aware recommendations and provisional Bayesian Knowledge Tracing (BKT)-style mastery estimates.
 - English/Hindi/Telugu interface support and machine-translated adaptive content.
 - Curriculum-grounded tutor with source citations (RAG-style retrieval from teacher-imported excerpts).
-- Teacher dashboard with class rosters, student support indicators and single/bulk curriculum import.
+- Teacher dashboard with class rosters, student support indicators, single/bulk JSON import, and PDF/TXT/HTML curriculum upload and chunking.
+- Teacher-assigned assessments with a curriculum question builder, due dates, server-side grading, progress updates, and result summaries; students can complete assessments at /assessments.
 - Supabase bearer-token verification, student/course ownership checks and server-side quiz grading before certificate issuance.
 - Offline plan caching and queued answer retry.
 
@@ -280,6 +281,7 @@ See [ADAPTIVE_LEARNING.md](./ADAPTIVE_LEARNING.md) for setup, JSON import format
 
 - /adaptive — personalized practice and progress
 - /tutor — curriculum-grounded question answering with source metadata
-- /teacher — class overview and curriculum import (trusted teacher accounts only)
+- /teacher — class overview, curriculum document import, assessment builder and results (trusted teacher accounts only)
+- /assessments — student-assigned assessments, submission and graded results
 
 Backend checks: cd backend && npm test. Frontend production build: cd frontend && npm run build.
