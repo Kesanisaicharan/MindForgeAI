@@ -2,6 +2,7 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import Certificate from '../models/Certificate.model.js';
 import Course from '../models/Course.model.js';
+import QuizSession from '../models/QuizSession.model.js';
 import { sendCertificateEmail } from '../services/email.service.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
@@ -10,13 +11,15 @@ router.use(requireAuth);
 
 router.post('/generate', async (req, res) => {
     try {
-        const { courseId, score } = req.body;
-        const numericScore = Number(score);
-        if (!courseId || !Number.isFinite(numericScore) || numericScore < 80 || numericScore > 100) {
-            return res.status(400).json({ success: false, error: 'A course ID and a score between 80 and 100 are required.' });
-        }
+        const { courseId } = req.body;
+        if (!courseId) return res.status(400).json({ success: false, error: 'A course ID is required.' });
         const course = await Course.findOne({ _id: courseId, userId: req.user.id });
         if (!course) return res.status(404).json({ success: false, error: 'Course not found.' });
+        const latestQuiz = await QuizSession.findOne({ userId: req.user.id, courseId: course._id, submitted: true }).sort({ submittedAt: -1 });
+        if (!latestQuiz || latestQuiz.score < 80) {
+            return res.status(403).json({ success: false, error: 'A submitted quiz score of at least 80% is required to claim this certificate.' });
+        }
+        const numericScore = latestQuiz.score;
         const userName = req.user.user_metadata?.full_name || req.user.user_metadata?.name || req.user.email?.split('@')[0] || 'Student';
         const email = req.user.email || '';
         let cert = await Certificate.findOne({ userId: req.user.id, courseId: course._id });
