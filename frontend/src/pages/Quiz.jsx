@@ -19,7 +19,7 @@ const Quiz = () => {
     useEffect(() => {
         const fetchQuiz = async () => {
             try {
-                const API = import.meta.env.VITE_API_URL;
+                const API = import.meta.env.VITE_API_URL || '';
                 const response = await apiClient.post(`${API}/api/quiz/generate`, 
                     { courseId },
                     { timeout: 15000 } // Add 15 second timeout to prevent infinite loading
@@ -92,7 +92,7 @@ const Quiz = () => {
         setSubmitting(true);
         setError('');
         try {
-            const API = import.meta.env.VITE_API_URL;
+            const API = import.meta.env.VITE_API_URL || '';
             const response = await apiClient.post(`${API}/api/quiz/submit`, {
                 quizId,
                 answers: quiz.map((_, idx) => answers[idx])
