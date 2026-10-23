@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
@@ -21,7 +21,7 @@ const Generate = () => {
 
         try {
             const API = import.meta.env.VITE_API_URL;
-            const response = await axios.post(`${API}/api/ai/generate`, {
+            const response = await apiClient.post(`${API}/api/ai/generate`, {
                 prompt,
                 userId: user?.id || user?.uid || 'anonymous'
             });
