@@ -42,9 +42,10 @@ export const listAssessmentTopics = async (req, res) => {
 
 export const createTeacherAssessment = async (req, res) => {
     try {
-        const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
-        const { rosterId, board = 'CBSE', language = 'en', subject = 'Mathematics', topicIds } = req.body;
-        const grade = Number(req.body.grade);
+        const body = req.body || {};
+        const title = typeof body.title === 'string' ? body.title.trim() : '';
+        const { rosterId, board = 'CBSE', language = 'en', subject = 'Mathematics', topicIds } = body;
+        const grade = Number(body.grade);
         if (!title || title.length > 160) return res.status(400).json({ success: false, error: 'Assessment title is required (maximum 160 characters).' });
         if (!mongoose.isValidObjectId(rosterId)) return res.status(400).json({ success: false, error: 'Choose a valid class roster.' });
         if (!Number.isInteger(grade) || grade < 6 || grade > 10) return res.status(400).json({ success: false, error: 'grade must be between 6 and 10.' });
@@ -56,8 +57,8 @@ export const createTeacherAssessment = async (req, res) => {
         }
 
         let dueAt = null;
-        if (req.body.dueAt) {
-            dueAt = new Date(req.body.dueAt);
+        if (body.dueAt) {
+            dueAt = new Date(body.dueAt);
             if (Number.isNaN(dueAt.getTime()) || dueAt.getTime() <= Date.now()) {
                 return res.status(400).json({ success: false, error: 'Due date must be a valid future date and time.' });
             }
@@ -197,7 +198,8 @@ export const submitStudentAssessment = async (req, res) => {
             return res.status(403).json({ success: false, error: 'The submission deadline has passed.' });
         }
 
-        const graded = gradeAssessment(assessment.questions, req.body.answers);
+        const answers = req.body?.answers;
+        const graded = gradeAssessment(assessment.questions, answers);
         // Persist topic-level mastery with stable idempotency keys. If a database write is
         // retried after a partial failure, the same question attempt is not counted twice.
         for (let index = 0; index < assessment.questions.length; index += 1) {
@@ -210,14 +212,14 @@ export const submitStudentAssessment = async (req, res) => {
                 subject: assessment.subject,
                 topicId: question.topicId,
                 questionId: question.questionId,
-                answerIndex: req.body.answers[index],
+                answerIndex: answers[index],
                 clientAttemptId: `assessment-${assessment._id}-${req.user.id}-${index}`
             });
         }
         const submission = await AssessmentSubmission.create({
             assessmentId: assessment._id,
             studentId: req.user.id,
-            answers: req.body.answers,
+            answers,
             score: graded.score,
             correctCount: graded.correctCount,
             totalQuestions: graded.totalQuestions,
