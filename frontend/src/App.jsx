@@ -10,6 +10,8 @@ import Quiz from './pages/Quiz';
 import Certificate from './pages/Certificate';
 import Home from './pages/Home'; // Properly importing the new Home.jsx
 import AdaptiveLearning from './pages/AdaptiveLearning';
+import CurriculumTutor from './pages/CurriculumTutor';
+import TeacherDashboard from './pages/TeacherDashboard';
 
 // Placeholders for remaining pages
 const Profile = () => <div className="p-10 text-gray-900 dark:text-white"><h1 className="text-3xl font-bold">Profile</h1></div>;
@@ -40,6 +42,8 @@ function App() {
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
               <Route path="/generate" element={<PrivateRoute><Generate /></PrivateRoute>} />
               <Route path="/adaptive" element={<PrivateRoute><AdaptiveLearning /></PrivateRoute>} />
+              <Route path="/tutor" element={<PrivateRoute><CurriculumTutor /></PrivateRoute>} />
+              <Route path="/teacher" element={<PrivateRoute><TeacherDashboard /></PrivateRoute>} />
               <Route path="/course/:id" element={<PrivateRoute><CourseView /></PrivateRoute>} />
               <Route path="/quiz/:courseId" element={<PrivateRoute><Quiz /></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
