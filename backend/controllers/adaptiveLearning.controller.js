@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import LearningProfile from '../models/LearningProfile.model.js';
 import TeacherRoster from '../models/TeacherRoster.model.js';
 import { getLearningPlan, submitLearningAttempt } from '../services/adaptiveLearning.service.js';
@@ -7,9 +8,22 @@ export const getPlan = async (req, res) => {
         if (req.params.studentId !== req.user.id) {
             return res.status(403).json({ success: false, error: 'You can only view your own learning plan.' });
         }
+        const grade = req.query.grade === undefined ? undefined : Number(req.query.grade);
+        if (grade !== undefined && (!Number.isInteger(grade) || grade < 6 || grade > 10)) {
+            return res.status(400).json({ success: false, error: 'grade must be an integer between 6 and 10.' });
+        }
+        if (req.query.board && !['CBSE', 'ICSE', 'State Board'].includes(req.query.board)) {
+            return res.status(400).json({ success: false, error: 'Unsupported board.' });
+        }
+        if (req.query.language && !['en', 'hi', 'te'].includes(req.query.language)) {
+            return res.status(400).json({ success: false, error: 'Unsupported language.' });
+        }
+        if (req.query.subject && !['All', 'Mathematics', 'Science', 'Programming'].includes(req.query.subject)) {
+            return res.status(400).json({ success: false, error: 'Unsupported subject.' });
+        }
         const data = await getLearningPlan({
             studentId: req.user.id,
-            grade: req.query.grade,
+            grade,
             board: req.query.board,
             language: req.query.language,
             subject: req.query.subject
@@ -41,8 +55,9 @@ export const getTeacherRosters = async (req, res) => {
 
 export const saveTeacherRoster = async (req, res) => {
     try {
-        const name = String(req.body.name || '').trim();
-        const ids = Array.isArray(req.body.studentIds) ? req.body.studentIds.map(id => String(id).trim()).filter(Boolean) : [];
+        const body = req.body || {};
+        const name = String(body.name || '').trim();
+        const ids = Array.isArray(body.studentIds) ? body.studentIds.map(id => String(id).trim()).filter(Boolean) : [];
         if (!name || name.length > 100) return res.status(400).json({ success: false, error: 'A class name up to 100 characters is required.' });
         if (!ids.length || ids.length > 100) return res.status(400).json({ success: false, error: 'Provide between 1 and 100 student IDs.' });
         const uniqueIds = [...new Set(ids)];
@@ -63,6 +78,7 @@ export const saveTeacherRoster = async (req, res) => {
 
 export const getTeacherOverview = async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.query.rosterId)) return res.status(400).json({ success: false, error: 'A valid class roster ID is required.' });
         const roster = await TeacherRoster.findOne({ _id: req.query.rosterId, teacherId: req.user.id }).lean();
         if (!roster) return res.status(404).json({ success: false, error: 'Class roster not found.' });
         const profiles = await LearningProfile.find({ studentId: { $in: roster.studentIds } })
