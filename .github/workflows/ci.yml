@@ -29,7 +29,7 @@ jobs:
         run: npm test
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm install
+        run: npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=60000
       - name: Build frontend
         working-directory: frontend
         run: npm run build
