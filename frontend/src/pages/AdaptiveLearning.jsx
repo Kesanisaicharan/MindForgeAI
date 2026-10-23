@@ -68,6 +68,21 @@ const AdaptiveLearning = () => {
         setLoading(true);
         setError('');
         try {
+            // Retry queued answers when connectivity returns; retain any item that still fails.
+            const pendingKey = `mindforge-pending-${studentId}`;
+            const queued = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+            const remaining = [];
+            for (const item of queued) {
+                try {
+                    const { savedAt, ...attempt } = item;
+                    await axios.post(`${api}/api/adaptive/attempt`, attempt);
+                } catch {
+                    remaining.push(item);
+                }
+            }
+            if (remaining.length) localStorage.setItem(pendingKey, JSON.stringify(remaining));
+            else localStorage.removeItem(pendingKey);
+
             const response = await axios.get(`${api}/api/adaptive/plan/${encodeURIComponent(studentId)}`, {
                 params: { grade, board, language, subject }
             });
@@ -111,11 +126,15 @@ const AdaptiveLearning = () => {
             setSelected(null);
             await loadPlan();
         } catch (err) {
-            const pendingKey = `mindforge-pending-${studentId}`;
-            const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
-            pending.push({ ...payload, savedAt: new Date().toISOString() });
-            localStorage.setItem(pendingKey, JSON.stringify(pending.slice(-100)));
-            setFeedback({ message: t.offline, warning: true });
+            if (!err.response) {
+                const pendingKey = `mindforge-pending-${studentId}`;
+                const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                pending.push({ ...payload, savedAt: new Date().toISOString() });
+                localStorage.setItem(pendingKey, JSON.stringify(pending.slice(-100)));
+                setFeedback({ message: t.offline, warning: true });
+            } else {
+                setFeedback({ message: err.response.data?.error || 'Could not save this answer. Please retry.', warning: true });
+            }
         } finally {
             setSubmitting(false);
         }
