@@ -161,7 +161,7 @@ export const getLearningPlan = async ({ studentId, grade, board, language, subje
 };
 
 export const submitLearningAttempt = async ({ studentId, grade, board, language, topicId, questionId, answerIndex }) => {
-    if (!studentId || !topicId || !questionId || !Number.isInteger(Number(answerIndex))) {
+    if (!studentId || !topicId || !questionId || !Number.isInteger(Number(answerIndex)) || Number(answerIndex) < 0) {
         const error = new Error('studentId, topicId, questionId, and integer answerIndex are required.');
         error.status = 400;
         throw error;
@@ -171,6 +171,12 @@ export const submitLearningAttempt = async ({ studentId, grade, board, language,
     if (!topic || !question) {
         const error = new Error('Unknown topic or question.');
         error.status = 404;
+        throw error;
+    }
+
+    if (Number(answerIndex) >= question.options.length) {
+        const error = new Error('answerIndex is outside the available options.');
+        error.status = 400;
         throw error;
     }
 
