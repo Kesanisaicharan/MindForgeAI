@@ -3,7 +3,7 @@ import TeacherRoster from '../models/TeacherRoster.model.js';
 import TeacherAssessment from '../models/TeacherAssessment.model.js';
 import AssessmentSubmission from '../models/AssessmentSubmission.model.js';
 import { CURRICULUM } from '../data/adaptiveCurriculum.js';
-import { buildAssessmentQuestions, gradeAssessment } from '../services/teacherAssessment.service.js';
+import { buildAssessmentQuestions, gradeAssessment, localizeAssessmentQuestions } from '../services/teacherAssessment.service.js';
 import { submitLearningAttempt } from '../services/adaptiveLearning.service.js';
 
 const publicAssessment = (assessment) => ({
@@ -70,7 +70,8 @@ export const createTeacherAssessment = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Add students to the class roster before assigning an assessment.' });
         }
 
-        const questions = buildAssessmentQuestions({ topicIds, grade, subject: subject.trim() });
+        let questions = buildAssessmentQuestions({ topicIds, grade, subject: subject.trim() });
+        questions = await localizeAssessmentQuestions(questions, language);
         const assessment = await TeacherAssessment.create({
             teacherId: req.user.id,
             rosterId: roster._id,
