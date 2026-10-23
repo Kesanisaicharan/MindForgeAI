@@ -1,89 +1,56 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import Certificate from '../models/Certificate.model.js';
+import Course from '../models/Course.model.js';
 import { sendCertificateEmail } from '../services/email.service.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = express.Router();
+router.use(requireAuth);
 
-// ✅ GENERATE CERTIFICATE
 router.post('/generate', async (req, res) => {
     try {
-        const { userId, userName, email, courseId, courseTitle, score } = req.body;
-
-        console.log("📥 Incoming data:", req.body);
-
-        if (!userId || !userName || !courseId || !courseTitle || score === undefined) {
-            return res.status(400).json({ error: 'Missing data' });
+        const { courseId, score } = req.body;
+        const numericScore = Number(score);
+        if (!courseId || !Number.isFinite(numericScore) || numericScore < 80 || numericScore > 100) {
+            return res.status(400).json({ success: false, error: 'A course ID and a score between 80 and 100 are required.' });
         }
-
-        // ✅ CHECK EXISTING
-        let cert = await Certificate.findOne({ userId, courseId });
-
+        const course = await Course.findOne({ _id: courseId, userId: req.user.id });
+        if (!course) return res.status(404).json({ success: false, error: 'Course not found.' });
+        const userName = req.user.user_metadata?.full_name || req.user.user_metadata?.name || req.user.email?.split('@')[0] || 'Student';
+        const email = req.user.email || '';
+        let cert = await Certificate.findOne({ userId: req.user.id, courseId: course._id });
         if (!cert) {
-            const generatedId = uuidv4() || `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            console.log("🛠️ GENERATED ID:", generatedId);
-
-            try {
-                cert = await Certificate.create({
-                    certificateId: generatedId,
-                    userId,
-                    userName,
-                    courseId,
-                    courseTitle,
-                    score,
-                    certificateUrl: `/certificate/${courseId}?score=${score}`,
-                });
-                console.log("✅ Certificate saved successfully:", cert._id);
-            } catch (createErr) {
-                console.error("❌ CREATE ERROR:", createErr);
-                throw createErr;
-            }
-        } else {
-            console.log("⚠️ Certificate already exists for this course.");
-        }
-        // ✅ SEND EMAIL VIA RESEND (TEST MODE FIX)
-        let emailSent = false;
-
-        if (email === "kesanisaicharan52@gmail.com") {
-            const emailResult = await sendCertificateEmail({
-                email,
-                userName,
-                courseTitle,
-                score
+            cert = await Certificate.create({
+                certificateId: uuidv4(), userId: req.user.id, userName,
+                courseId: course._id, courseTitle: course.title, score: numericScore,
+                certificateUrl: `/certificate/${course._id}?score=${numericScore}`
             });
-            emailSent = emailResult.success;
-        } else {
-            console.log("🚫 Skipping email (Resend test mode restriction)");
-            emailSent = false;
         }
-
-        res.json({
-            success: true,
-            message: 'Certificate processed!',
-            emailSent,
-            data: cert
-        });
-
+        let emailSent = false;
+        if (email) {
+            try {
+                const emailResult = await sendCertificateEmail({ email, userName, courseTitle: course.title, score: numericScore });
+                emailSent = Boolean(emailResult?.success);
+            } catch (mailError) {
+                console.error('Certificate email failed:', mailError.message);
+            }
+        }
+        return res.json({ success: true, message: 'Certificate processed.', emailSent, data: cert });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server error" });
+        console.error('Certificate generation failed:', err);
+        return res.status(500).json({ success: false, error: 'Could not generate certificate.' });
     }
 });
 
-// ✅ GET CERTIFICATES
 router.get('/:userId', async (req, res) => {
     try {
-        const certificates = await Certificate.find({
-            userId: req.params.userId
-        }).sort({ createdAt: -1 });
-
-        console.log("Certificates found:", certificates.length);
-
-        res.json({ success: true, data: certificates });
-
+        if (req.params.userId !== req.user.id) return res.status(403).json({ success: false, error: 'You can only view your own certificates.' });
+        const certificates = await Certificate.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        return res.json({ success: true, data: certificates });
     } catch (err) {
-        res.status(500).json({ error: "Fetch failed" });
+        console.error('Certificate fetch failed:', err);
+        return res.status(500).json({ success: false, error: 'Fetch failed' });
     }
 });
-
 export default router;
