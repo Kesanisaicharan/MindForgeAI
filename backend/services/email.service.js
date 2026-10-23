@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+export const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 })[character]);
 
