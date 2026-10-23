@@ -3,7 +3,7 @@ import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { BookOpen, Loader2, Users } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || '';
 const emptySource = { title:'', text:'', grade:6, board:'CBSE', subject:'Mathematics', language:'en', sourceTitle:'', sourceUrl:'', page:'' };
 
 export default function TeacherDashboard() {
@@ -18,6 +18,9 @@ export default function TeacherDashboard() {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [documentFile, setDocumentFile] = useState(null);
+    const [documentMeta, setDocumentMeta] = useState({ grade: 6, board: 'CBSE', subject: 'Mathematics', language: 'en', sourceTitle: '', sourceUrl: '', page: '' });
+    const [uploadingDocument, setUploadingDocument] = useState(false);
 
     const loadRosters = async () => {
         try {
@@ -72,6 +75,28 @@ export default function TeacherDashboard() {
         } catch (e) { setError(e.response?.data?.error || 'Bulk import failed.'); }
     };
 
+    const uploadDocument = async (e) => {
+        e.preventDefault();
+        setError(''); setMessage('');
+        if (!documentFile) { setError('Choose a PDF, TXT, or HTML document first.'); return; }
+        setUploadingDocument(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', documentFile);
+            Object.entries(documentMeta).forEach(([key, value]) => formData.append(key, String(value)));
+            const result = await api.post(`${API}/api/curriculum/upload`, formData);
+            setMessage(`Imported ${result.data.count} curriculum chunks from ${documentFile.name} (${result.data.charactersExtracted} characters extracted).`);
+            setDocumentFile(null);
+            setDocumentMeta((old) => ({ ...old, sourceTitle: '', sourceUrl: '', page: '' }));
+            const input = document.getElementById('mindforge-curriculum-file');
+            if (input) input.value = '';
+        } catch (e) {
+            setError(e.response?.data?.error || 'Could not ingest the document. Check its format and try again.');
+        } finally {
+            setUploadingDocument(false);
+        }
+    };
+
     const saveSource = async (e) => {
         e.preventDefault(); setError(''); setMessage('');
         try {
@@ -90,6 +115,37 @@ export default function TeacherDashboard() {
             {rosters.length>0 && <div className="flex flex-wrap gap-2">{rosters.map(r=><button key={r._id} onClick={()=>loadOverview(r._id)} className={`rounded-xl px-4 py-2 border ${selectedRoster===r._id?'bg-primary text-white':'border-gray-300 dark:border-gray-700'}`}>{r.name} ({r.studentIds.length})</button>)}</div>}
         </section>
         <section className="card-glass rounded-2xl p-6 space-y-4"><h2 className="text-xl font-bold">Student learning overview</h2>{loading?<Loader2 className="animate-spin"/>:overview.length===0?<p className="text-sm text-gray-500">Select a roster to view learners and concepts needing support.</p>:<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">{overview.map(s=><article key={s.studentId} className="rounded-xl border border-gray-200 dark:border-gray-700 p-4"><p className="font-bold break-all">{s.studentId}</p><p className="text-sm text-gray-500">Class {s.grade} · {s.board} · {s.totalAttempts} answers</p><p className="mt-3 text-sm font-semibold">Mastered topics: {s.masteredTopics}</p><p className="text-sm font-semibold text-amber-600 mt-2">Needs support: {s.needsSupport.length}</p>{s.needsSupport.map(topic=><p key={topic.topicId} className="text-xs mt-1 break-all">{topic.topicId} — {Math.round(topic.masteryProbability*100)}% estimated mastery</p>)}</article>)}</div>}</section>
+        <section className="card-glass rounded-2xl p-6 space-y-4">
+            <h2 className="text-xl font-bold">Import a curriculum document</h2>
+            <p className="text-sm text-gray-500">Upload a text-based PDF, TXT, or HTML file up to 8 MB. Text is extracted, split into overlapping chunks, and stored with source metadata. Scanned PDFs need OCR before upload. Only import material you are authorized to use.</p>
+            <form onSubmit={uploadDocument} className="grid md:grid-cols-2 gap-4">
+                <label className="md:col-span-2 text-sm font-semibold">Document file
+                    <input id="mindforge-curriculum-file" required type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html" onChange={e=>setDocumentFile(e.target.files?.[0] || null)} className="mt-2 block w-full text-sm"/>
+                </label>
+                <label className="text-sm font-semibold">Source / textbook title
+                    <input required maxLength={200} value={documentMeta.sourceTitle} onChange={e=>setDocumentMeta({...documentMeta,sourceTitle:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"/>
+                </label>
+                <label className="text-sm font-semibold">Source URL (HTTPS only)
+                    <input type="url" value={documentMeta.sourceUrl} onChange={e=>setDocumentMeta({...documentMeta,sourceUrl:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700" placeholder="https://…"/>
+                </label>
+                <label className="text-sm font-semibold">Subject
+                    <input required maxLength={80} value={documentMeta.subject} onChange={e=>setDocumentMeta({...documentMeta,subject:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"/>
+                </label>
+                <label className="text-sm font-semibold">Grade
+                    <select value={documentMeta.grade} onChange={e=>setDocumentMeta({...documentMeta,grade:Number(e.target.value)})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700">{[6,7,8,9,10].map(g=><option key={g} value={g}>Class {g}</option>)}</select>
+                </label>
+                <label className="text-sm font-semibold">Board
+                    <select value={documentMeta.board} onChange={e=>setDocumentMeta({...documentMeta,board:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"><option>CBSE</option><option>ICSE</option><option>State Board</option></select>
+                </label>
+                <label className="text-sm font-semibold">Content language
+                    <select value={documentMeta.language} onChange={e=>setDocumentMeta({...documentMeta,language:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"><option value="en">English</option><option value="hi">Hindi</option><option value="te">Telugu</option></select>
+                </label>
+                <label className="text-sm font-semibold">Page / section (optional)
+                    <input maxLength={30} value={documentMeta.page} onChange={e=>setDocumentMeta({...documentMeta,page:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"/>
+                </label>
+                <button disabled={!documentFile || uploadingDocument} className="md:col-span-2 rounded-xl bg-primary text-white px-5 py-3 font-bold disabled:opacity-50">{uploadingDocument ? 'Extracting and importing…' : 'Extract and import document'}</button>
+            </form>
+        </section>
         <section className="card-glass rounded-2xl p-6 space-y-3"><h2 className="text-xl font-bold">Official curriculum references</h2><p className="text-sm text-gray-500">Use official portals to verify the grade, board, edition and language before adding a source. Check the publisher's terms first; linking to a textbook is not permission to republish its text inside an app.</p><ul className="list-disc pl-5 space-y-2 text-primary underline"><li><a href="https://ncert.nic.in/textbook.php" target="_blank" rel="noreferrer">NCERT official textbook portal</a></li><li><a href="https://epathshala.nic.in/epathshala.php?id=Students&ln=en" target="_blank" rel="noreferrer">ePathshala student resources</a></li><li><a href="https://ncert.nic.in/syllabus_nep.php?ln=en" target="_blank" rel="noreferrer">NCERT syllabus resources</a></li></ul></section>
         <section className="card-glass rounded-2xl p-6 space-y-4"><h2 className="text-xl font-bold">Bulk curriculum import (JSON)</h2><p className="text-sm text-gray-500">Prepare a JSON array with title, text, grade, board, subject, language, sourceTitle, sourceUrl and page. Import up to 100 chunks per batch. Only upload teacher-reviewed content you are allowed to use.</p><input type="file" accept=".json,application/json" onChange={importBulkFile} className="block w-full text-sm"/>{bulkChunks.length>0 && <div className="flex items-center justify-between gap-3"><p className="text-sm">{bulkChunks.length} chunks ready to import</p><button onClick={submitBulkImport} className="rounded-xl bg-primary text-white px-5 py-3 font-bold">Import {bulkChunks.length} chunks</button></div>}<details><summary className="cursor-pointer text-sm underline">Show JSON format</summary><pre className="text-xs whitespace-pre-wrap mt-3 p-3 rounded-xl bg-gray-100 dark:bg-gray-900">{JSON.stringify({chunks:[{title:"Fractions",text:"Teacher-reviewed excerpt text",grade:6,board:"CBSE",subject:"Mathematics",language:"en",sourceTitle:"Textbook name",sourceUrl:"https://example.org/source",page:"12"}]},null,2)}</pre></details></section>
         <section className="card-glass rounded-2xl p-6 space-y-4"><h2 className="text-xl font-bold flex items-center gap-2"><BookOpen/> Add reviewed curriculum excerpt</h2><p className="text-sm text-gray-500">Use content you have permission to use, verify its board/class/language, and cite the actual textbook or source. This is an excerpt importer, not a complete syllabus uploader.</p>
