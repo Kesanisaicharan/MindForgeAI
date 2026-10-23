@@ -14,7 +14,7 @@ const CourseView = () => {
     useEffect(() => {
         const fetchCourse = async () => {
             try {
-                const API = import.meta.env.VITE_API_URL;
+                const API = import.meta.env.VITE_API_URL || '';
                 const response = await apiClient.get(`${API}/api/ai/course/${id}`);
                 if (response.data.success) {
                     setCourse(response.data.data);
