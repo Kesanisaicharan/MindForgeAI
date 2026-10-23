@@ -12,12 +12,12 @@ const copy = {
         passed: 'Assessment passed', review: 'Review the feedback and practise again',
         correct: 'correct out of', yourAnswer: 'Your answer', correctAnswer: 'Correct answer',
         submit: 'Submit assessment', submitting: 'Submitting…', answered: 'answered',
-        answerAll: t.answerAll,
-        submitSuccess: t.submitSuccess,
+        answerAll: 'Please answer every question before submitting.',
+        submitSuccess: 'Your answers were submitted and graded successfully.',
         start: 'Start assessment', viewResult: 'View result', expired: 'Expired',
         completed: 'Completed', deadlinePassed: 'Deadline passed',
-        loadError: t.loadError,
-        openError: t.openError, submitError: t.submitError,
+        loadError: 'Could not load assigned assessments. Please sign in again and retry.',
+        openError: 'Could not open this assessment.', submitError: 'Submission failed. Please retry.',
         loading: 'Loading…'
     },
     hi: {
@@ -150,7 +150,7 @@ const AssignedAssessments = () => {
                             <p className="text-xs uppercase tracking-widest text-primary font-bold">{active.subject} · Class {active.grade}</p>
                             <h2 className="text-2xl font-black mt-1">{active.title}</h2>
                             <p className="text-sm text-gray-500 mt-1">{active.board} · {active.questions?.length || result?.totalQuestions || 0} {t.questions}</p>
-                            {active.dueAt && <p className="text-xs text-gray-500 mt-2 flex items-center gap-1"><Clock3 size={14}/> Due {new Date(active.dueAt).toLocaleString()}</p>}
+                            {active.dueAt && <p className="text-xs text-gray-500 mt-2 flex items-center gap-1"><Clock3 size={14}/> {t.due} {new Date(active.dueAt).toLocaleString()}</p>}
                         </div>
                         <button onClick={close} className="self-start rounded-xl border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-semibold">{t.back}</button>
                     </div>
@@ -212,7 +212,7 @@ const AssignedAssessments = () => {
                                 <div className="min-w-0">
                                     <h3 className="font-bold">{item.title}</h3>
                                     <p className="text-sm text-gray-500 mt-1">{item.rosterName} · Class {item.grade} · {item.subject} · {item.questionCount} questions</p>
-                                    {item.dueAt && <p className="text-xs text-gray-500 mt-1">Due {new Date(item.dueAt).toLocaleString()}</p>}
+                                    {item.dueAt && <p className="text-xs text-gray-500 mt-1">{t.due} {new Date(item.dueAt).toLocaleString()}</p>}
                                     {item.completed && <p className="text-sm text-emerald-600 mt-2 font-semibold">{t.completed} · Score {item.score}%</p>}
                                     {item.expired && !item.completed && <p className="text-sm text-amber-600 mt-2">{t.deadlinePassed}</p>}
                                 </div>
