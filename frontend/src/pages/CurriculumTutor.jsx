@@ -19,7 +19,7 @@ export default function CurriculumTutor() {
         if (!query.trim() || !user) return;
         setLoading(true); setError(''); setAnswer(null);
         try {
-            const response = await api.post(`${import.meta.env.VITE_API_URL}/api/curriculum/ask`, {
+            const response = await api.post(`${import.meta.env.VITE_API_URL || ''}/api/curriculum/ask`, {
                 query, grade: Number(grade), board, subject, language
             });
             setAnswer(response.data.data);
