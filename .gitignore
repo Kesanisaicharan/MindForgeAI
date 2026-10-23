@@ -27,3 +27,10 @@ backend/.env.production
 *.njsproj
 *.sln
 *.sw?
+
+# Local diagnostics and database exports (never commit user or production data)
+backend/db_*.json
+backend/db_output.txt
+backend/test_api.js
+backend/deep_fix.js
+backend/fix_index.js
