@@ -4,14 +4,15 @@ This branch adds the first integrated adaptive-learning workflow for the Classes
 
 ## Features now wired into this branch
 
-1. **Curriculum ingestion and retrieval (RAG-style):** teachers can add single reviewed excerpts or import up to 100 JSON chunks at a time. Each chunk is tagged with grade, board, subject, language and source metadata. Student tutor queries retrieve matching excerpts and return source markers/metadata. When no excerpt matches, the tutor explicitly says so rather than inventing a curriculum answer.
+1. **Curriculum ingestion and retrieval (RAG-style):** teachers can add single reviewed excerpts, import up to 100 JSON chunks at a time, or upload a text-based PDF/TXT/HTML file up to 8 MB. Text is extracted, chunked with overlap, and stored with grade, board, subject, language and source metadata. The retrieval tutor returns source markers/metadata and uses a safe excerpt fallback if the AI provider is unavailable. When no excerpt matches, it explicitly says so rather than inventing an answer.
 2. **Student learning profile and adaptation:** the learner profile stores concept-level attempts and provisional mastery estimates. A BKT-style update changes mastery estimates after answers, prerequisite relationships influence recommendations, and the question selector uses the estimate to choose a supported difficulty.
 3. **Multilingual support:** the adaptive lesson UI supports English/Hindi/Telugu labels and requests machine translation of topic titles, descriptions, question text/options and feedback for Hindi/Telugu. The curriculum tutor retrieves only content tagged with the selected language. Machine-translated material must be educator-reviewed; if the translation model is unavailable, adaptive content falls back to the original English.
 4. **Teacher dashboard:** teachers can save class rosters using student Supabase UUIDs, view concept-level support indicators for students in their own saved rosters, and add/import reviewed curriculum excerpts. Teacher access requires server-controlled app_metadata.role = "teacher" or a matching TEACHER_USER_IDS environment allowlist.
 5. **Student data security and validation:** protected APIs verify Supabase bearer tokens server-side, learning plans and attempts are scoped to the signed-in student, course list/read/delete/quiz endpoints enforce ownership, teacher routes require teacher access, class overviews are restricted to the teacher's own roster, and certificates require a server-graded quiz score of at least 80%.
 6. **Server-side quiz grading:** correct answers are stored in a private quiz session and are not sent to the browser before submission. The server grades submitted option indices and stores the result; certificate issuance checks the saved result rather than trusting the score in the URL.
 7. **Offline resilience:** the adaptive page caches its latest plan and queues attempts in local storage when the network is unavailable. Queued answers are retried when the plan is loaded after reconnection.
-8. **Tests and CI:** Node tests cover curriculum structure and teacher-role checks. GitHub Actions runs backend tests and a frontend production build on pushes to the feature branch and pull requests to main.
+8. **Teacher-assigned assessments:** teachers can create a class assessment from reviewed curriculum-bank topics, choose language and deadline, and view class submission results. Students assigned to that roster can take a quiz, receive server-side grading, and have topic mastery updated. Submission is unique per student/assessment and answer keys are not sent before submission.
+9. **Tests and CI:** Node tests cover BKT bounds/updates, answer persistence and idempotency, document extraction/chunking, curriculum retrieval fallbacks, teacher-role checks, assessment construction/grading/localization, and API health/protected routes. GitHub Actions runs backend tests and a frontend production build on pushes to feature branches and pull requests to main.
 
 ## Environment variables
 
@@ -56,11 +57,12 @@ npm run dev
 After signing in:
 - /adaptive — personalized concept practice and progress.
 - /tutor — curriculum-grounded tutor with source citations.
-- /teacher — teacher roster, progress overview and curriculum import (teacher role required).
+- /teacher — teacher roster, progress overview, PDF/TXT/HTML + JSON curriculum import, assessment builder and results (teacher role required).
+- /assessments — assigned student assessment list, response submission, grading, and result review.
 
 ## Curriculum JSON import format
 
-The teacher dashboard accepts a JSON array or an object with a chunks array, up to 100 items per import. Each item uses:
+The teacher dashboard accepts PDF/TXT/HTML files up to 8 MB (text-based PDF only; scanned PDFs need OCR) as well as a JSON array or object with a chunks array, up to 100 items per import. Each item uses:
 ```json
 {
   "title": "Fractions",
