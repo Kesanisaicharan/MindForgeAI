@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../lib/api';
 import { motion } from 'framer-motion';
 import { Award, Loader2, MailCheck, Share2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,7 +35,7 @@ const Certificate = () => {
         const fetchCourse = async () => {
             try {
                 const API = import.meta.env.VITE_API_URL;
-                const response = await axios.get(`${API}/api/ai/course/${id}`);
+                const response = await apiClient.get(`${API}/api/ai/course/${id}`);
                 if (response.data.success) {
                     setCourse(response.data.data);
                 }
@@ -62,7 +62,7 @@ const Certificate = () => {
                 console.log("📧 Attempting to send email to:", user.email);
 
                 const API = import.meta.env.VITE_API_URL;
-                const response = await axios.post(`${API}/api/certificates/generate`, {
+                const response = await apiClient.post(`${API}/api/certificates/generate`, {
                     userId: activeUserId,
                     userName: user?.user_metadata?.full_name || user?.displayName || 'Valued Student',
                     email: user?.email, // Added user email
