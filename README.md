@@ -118,6 +118,7 @@ GROQ_API_KEY=your_groq_api_key
 RESEND_API_KEY=your_resend_api_key
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
+TEACHER_USER_IDS=comma_separated_trusted_teacher_supabase_user_ids
 ```
 
 ---
@@ -256,3 +257,29 @@ If you found this project useful:
 # 📌 Project Status
 
 🚧 Actively improving and adding new features
+
+
+---
+
+# 🧠 Adaptive Learning for Classes 6–10
+
+This branch includes a new adaptive-learning MVP for the Canvas Classes challenge.
+
+- Personalized topic practice, prerequisite-aware recommendations and provisional Bayesian Knowledge Tracing (BKT)-style mastery estimates.
+- English/Hindi/Telugu interface support and machine-translated adaptive content.
+- Curriculum-grounded tutor with source citations (RAG-style retrieval from teacher-imported excerpts).
+- Teacher dashboard with class rosters, student support indicators and single/bulk curriculum import.
+- Supabase bearer-token verification, student/course ownership checks and server-side quiz grading before certificate issuance.
+- Offline plan caching and queued answer retry.
+
+**Important:** this repository does not contain a complete official CBSE/ICSE/State Board syllabus. Teachers must import and verify curriculum content they are permitted to use. Machine translations and mastery estimates require educator review. Configure the backend's SUPABASE_URL and SUPABASE_ANON_KEY, plus TEACHER_USER_IDS or a server-managed Supabase app_metadata role for teacher access.
+
+See [ADAPTIVE_LEARNING.md](./ADAPTIVE_LEARNING.md) for setup, JSON import format, routes, security and known limitations.
+
+## New pages
+
+- /adaptive — personalized practice and progress
+- /tutor — curriculum-grounded question answering with source metadata
+- /teacher — class overview and curriculum import (trusted teacher accounts only)
+
+Backend checks: cd backend && npm test. Frontend production build: cd frontend && npm run build.
