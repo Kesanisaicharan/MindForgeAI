@@ -1,8 +1,17 @@
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
-});
+// Construct the provider client only when an AI operation is requested. This keeps
+// health, authentication, and non-AI APIs available when the key is not configured.
+let groqClient;
+const getGroqClient = () => {
+    if (!process.env.GROQ_API_KEY) {
+        const error = new Error('AI provider is not configured.');
+        error.status = 503;
+        throw error;
+    }
+    if (!groqClient) groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    return groqClient;
+};
 
 export const generateCourseFromPrompt = async (prompt) => {
     const systemPrompt = `You are an expert AI educator. Generate a structured educational course based on the given prompt.
@@ -20,7 +29,8 @@ The output MUST be a valid JSON object following this EXACT structure:
 }
 Ensure there are exactly 5 to 8  large modules. Return ONLY this JSON without any markdown formatting or extra text.`;
 
-    const response = await groq.chat.completions.create({
+    const client = getGroqClient();
+    const response = await client.chat.completions.create({
         messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt }
@@ -72,8 +82,9 @@ FORMAT (STRICT JSON ONLY):
   }
 ]`;
 
+    const client = getGroqClient();
     try {
-        const response = await groq.chat.completions.create({
+        const response = await client.chat.completions.create({
             messages: [
                 { role: 'system', content: systemPrompt }
             ],
