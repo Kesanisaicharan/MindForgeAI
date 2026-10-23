@@ -19,7 +19,8 @@ const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || 
 app.use(helmet());
 app.use(cors({
     origin(origin, callback) {
-        if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        const isDevelopment = process.env.NODE_ENV !== 'production';
+        if (!origin || allowedOrigins.includes(origin) || (allowedOrigins.length === 0 && isDevelopment)) {
             return callback(null, true);
         }
         return callback(new Error('Origin is not allowed by CORS'));
