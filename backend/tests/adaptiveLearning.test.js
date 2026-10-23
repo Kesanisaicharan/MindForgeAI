@@ -82,6 +82,7 @@ test('submitting an answer updates and persists mastery plus attempt history', a
     assert.equal(profile.skills[0].correct, 1);
     assert.equal(profile.attempts.length, 1);
     assert.equal(profile.attempts[0].isCorrect, true);
+    assert.equal(profile.attempts[0].answerIndex, 0);
     assert.equal(profile.saveCalls, 1);
 });
 
@@ -94,4 +95,68 @@ test('answer submission rejects non-integer and out-of-range indices before pers
         submitLearningAttempt({ studentId: 'test-student', topicId: 'g6-math-fractions', questionId: 'g6-frac-1', answerIndex: 99 }),
         { status: 400 }
     );
+});
+
+
+test('retrying an offline answer with the same clientAttemptId does not double-count it', async (t) => {
+    const originalFindOneAndUpdate = LearningProfile.findOneAndUpdate;
+    const profile = {
+        studentId: 'test-student-idempotent',
+        grade: 6,
+        board: 'CBSE',
+        preferredLanguage: 'en',
+        skills: [],
+        attempts: [],
+        saveCalls: 0,
+        async save() { this.saveCalls += 1; }
+    };
+    LearningProfile.findOneAndUpdate = async () => profile;
+    t.after(() => { LearningProfile.findOneAndUpdate = originalFindOneAndUpdate; });
+
+    const payload = {
+        studentId: profile.studentId,
+        topicId: 'g6-math-fractions',
+        questionId: 'g6-frac-1',
+        answerIndex: 0,
+        clientAttemptId: 'offline-attempt-0001',
+        language: 'en'
+    };
+    const first = await submitLearningAttempt(payload);
+    const second = await submitLearningAttempt(payload);
+
+    assert.equal(first.isCorrect, true);
+    assert.equal(second.isCorrect, true);
+    assert.equal(second.duplicate, true);
+    assert.equal(profile.attempts.length, 1);
+    assert.equal(profile.skills[0].attempts, 1);
+    assert.equal(profile.saveCalls, 1);
+});
+
+test('reusing an idempotency key with a different answer is rejected', async (t) => {
+    const originalFindOneAndUpdate = LearningProfile.findOneAndUpdate;
+    const profile = {
+        studentId: 'test-student-conflict',
+        grade: 6,
+        board: 'CBSE',
+        preferredLanguage: 'en',
+        skills: [],
+        attempts: [],
+        async save() {}
+    };
+    LearningProfile.findOneAndUpdate = async () => profile;
+    t.after(() => { LearningProfile.findOneAndUpdate = originalFindOneAndUpdate; });
+
+    const base = {
+        studentId: profile.studentId,
+        topicId: 'g6-math-fractions',
+        questionId: 'g6-frac-1',
+        clientAttemptId: 'offline-attempt-conflict',
+        language: 'en'
+    };
+    await submitLearningAttempt({ ...base, answerIndex: 0 });
+    await assert.rejects(
+        submitLearningAttempt({ ...base, answerIndex: 1 }),
+        { status: 409 }
+    );
+    assert.equal(profile.attempts.length, 1);
 });
