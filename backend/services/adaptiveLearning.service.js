@@ -41,8 +41,12 @@ const chooseRecommendation = (profile, grade, subject) => {
     const actualTarget = prerequisiteGap ? getTopic(prerequisiteGap) : target;
     const topic = actualTarget || target;
     const count = attempts.get(topic.id) || 0;
-    const q = topic.questions[Math.min(count, topic.questions.length - 1)] || topic.questions[0];
     const topicMastery = mastery.get(topic.id) ?? DEFAULT_MASTERY;
+    // Select difficulty from estimated mastery, not just attempt count.
+    const desiredDifficulty = topicMastery < 0.4 ? 1 : topicMastery < 0.75 ? 2 : 3;
+    const orderedQuestions = [...topic.questions].sort((a, b) => a.difficulty - b.difficulty);
+    const eligibleQuestions = orderedQuestions.filter(q => q.difficulty <= desiredDifficulty);
+    const q = eligibleQuestions[Math.min(count, eligibleQuestions.length - 1)] || orderedQuestions[0];
 
     return {
         topicId: topic.id,
