@@ -1,5 +1,8 @@
 import CurriculumChunk from '../models/CurriculumChunk.model.js';
 import { answerFromCurriculum } from '../services/curriculumRag.service.js';
+import { basename, extname } from 'node:path';
+import CurriculumChunk from '../models/CurriculumChunk.model.js';
+import { chunkText, extractDocumentText } from '../services/curriculumIngestion.service.js';
 
 export const addCurriculumChunk = async (req, res) => {
     try {
@@ -89,5 +92,60 @@ export const listCurriculumSources = async (req, res) => {
         return res.json({ success: true, data: sources });
     } catch {
         return res.status(500).json({ success: false, error: 'Could not list curriculum sources.' });
+    }
+};
+
+
+export const uploadCurriculumFile = async (req, res) => {
+    try {
+        const { grade, board, subject, language = 'en', sourceTitle, sourceUrl = '', page = '' } = req.body;
+        const numericGrade = Number(grade);
+        if (!req.file) return res.status(400).json({ success: false, error: 'Select a PDF, TXT, or HTML file.' });
+        if (!Number.isInteger(numericGrade) || numericGrade < 6 || numericGrade > 10) {
+            return res.status(400).json({ success: false, error: 'grade must be between 6 and 10.' });
+        }
+        if (!['CBSE', 'ICSE', 'State Board'].includes(board) || !['en', 'hi', 'te'].includes(language)) {
+            return res.status(400).json({ success: false, error: 'Unsupported board or language.' });
+        }
+        if (typeof subject !== 'string' || !subject.trim() || subject.trim().length > 80) {
+            return res.status(400).json({ success: false, error: 'A subject up to 80 characters is required.' });
+        }
+        if (typeof sourceTitle !== 'string' || !sourceTitle.trim() || sourceTitle.trim().length > 200) {
+            return res.status(400).json({ success: false, error: 'A source title up to 200 characters is required.' });
+        }
+        if (sourceUrl && !/^https:\/\//i.test(sourceUrl)) {
+            return res.status(400).json({ success: false, error: 'sourceUrl must use HTTPS.' });
+        }
+
+        const extractedText = await extractDocumentText(req.file);
+        const chunks = chunkText(extractedText);
+        if (chunks.length > 100) {
+            return res.status(413).json({ success: false, error: 'This document produces more than 100 chunks. Split it into smaller documents before importing.' });
+        }
+        const fileTitle = basename(req.file.originalname, extname(req.file.originalname)).slice(0, 140);
+        const documents = chunks.map((text, index) => ({
+            title: `${fileTitle || sourceTitle.trim()} — part ${index + 1}`.slice(0, 180),
+            text,
+            grade: numericGrade,
+            board,
+            subject: subject.trim(),
+            language,
+            sourceTitle: sourceTitle.trim(),
+            sourceUrl,
+            page: page ? `${page} (chunk ${index + 1})`.slice(0, 40) : `chunk ${index + 1}`,
+            approvedBy: req.user.id
+        }));
+        const inserted = await CurriculumChunk.insertMany(documents, { ordered: true });
+        return res.status(201).json({
+            success: true,
+            message: 'Document text extracted and imported.',
+            count: inserted.length,
+            charactersExtracted: extractedText.length,
+            data: inserted.map((item) => ({ id: String(item._id), title: item.title, grade: item.grade, subject: item.subject, page: item.page }))
+        });
+    } catch (error) {
+        const status = error.status || 500;
+        if (status >= 500) console.error('Curriculum document upload failed:', error);
+        return res.status(status).json({ success: false, error: status < 500 ? error.message : 'Could not ingest the curriculum document.' });
     }
 };
