@@ -43,6 +43,39 @@ export const askCurriculumTutor = async (req, res) => {
     }
 };
 
+
+export const addCurriculumBulk = async (req, res) => {
+    try {
+        const chunks = req.body.chunks;
+        if (!Array.isArray(chunks) || chunks.length < 1 || chunks.length > 100) {
+            return res.status(400).json({ success: false, error: 'chunks must be an array containing 1 to 100 items.' });
+        }
+        const allowedBoards = ['CBSE', 'ICSE', 'State Board'];
+        const allowedLanguages = ['en', 'hi', 'te'];
+        const docs = [];
+        for (const item of chunks) {
+            const grade = Number(item.grade);
+            if (!item.title?.trim() || !item.text?.trim() || !item.subject?.trim() || !item.sourceTitle?.trim()
+                || !Number.isInteger(grade) || grade < 6 || grade > 10
+                || !allowedBoards.includes(item.board) || !allowedLanguages.includes(item.language || 'en')
+                || (item.sourceUrl && !/^https:\/\//i.test(item.sourceUrl))) {
+                return res.status(400).json({ success: false, error: 'Every chunk must include title, text, subject, sourceTitle, class 6–10, supported board/language, and an HTTPS source URL if supplied.' });
+            }
+            docs.push({
+                title: item.title.trim(), text: item.text.trim(), grade, board: item.board,
+                subject: item.subject.trim(), language: item.language || 'en',
+                sourceTitle: item.sourceTitle.trim(), sourceUrl: item.sourceUrl || '',
+                page: String(item.page || ''), approvedBy: req.user.id
+            });
+        }
+        const inserted = await CurriculumChunk.insertMany(docs, { ordered: true });
+        return res.status(201).json({ success: true, count: inserted.length, data: inserted.map(d => ({ id: String(d._id), title: d.title, grade: d.grade, board: d.board, subject: d.subject, language: d.language })) });
+    } catch (error) {
+        console.error('Bulk curriculum ingestion failed:', error);
+        return res.status(500).json({ success: false, error: 'Could not import curriculum chunks.' });
+    }
+};
+
 export const listCurriculumSources = async (req, res) => {
     try {
         const { grade, board, subject, language } = req.query;
