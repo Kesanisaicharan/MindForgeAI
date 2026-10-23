@@ -30,6 +30,7 @@ export const addCurriculumChunk = async (req, res) => {
 export const askCurriculumTutor = async (req, res) => {
     try {
         const { query, grade, board, subject, language = 'en' } = req.body;
+        if (typeof query !== 'string' || !query.trim() || query.length > 1500) return res.status(400).json({ success: false, error: 'Question must be between 1 and 1500 characters.' });
         if (!Number.isInteger(Number(grade)) || Number(grade) < 6 || Number(grade) > 10) {
             return res.status(400).json({ success: false, error: 'grade must be between 6 and 10.' });
         }
