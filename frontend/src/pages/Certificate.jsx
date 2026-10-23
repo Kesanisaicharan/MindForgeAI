@@ -24,7 +24,7 @@ const Certificate = () => {
 
     // RESET generation state when course ID or search params (score/timestamp) change
     useEffect(() => {
-        console.log('CERTIFICATE: Route changed, resetting generation state.');
+        // Reset the certificate view when the route changes.
         hasGenerated.current = false;
         setEmailSent(false);
         setIssuedScore(score);
@@ -36,7 +36,7 @@ const Certificate = () => {
     useEffect(() => {
         const fetchCourse = async () => {
             try {
-                const API = import.meta.env.VITE_API_URL;
+                const API = import.meta.env.VITE_API_URL || '';
                 const response = await apiClient.get(`${API}/api/ai/course/${id}`);
                 if (response.data.success) {
                     setCourse(response.data.data);
@@ -60,23 +60,15 @@ const Certificate = () => {
                 hasGenerated.current = true;
                 setGenerating(true);
 
-                const activeUserId = user._id || user.id || user.uid || 'anonymous';
-                console.log("📧 Attempting to send email to:", user.email);
-
                 const API = import.meta.env.VITE_API_URL;
-                const response = await apiClient.post(`${API}/api/certificates/generate`, {
-                    userId: activeUserId,
-                    userName: user?.user_metadata?.full_name || user?.displayName || 'Valued Student',
-                    email: user?.email, // Added user email
-                    courseId: id,
-                    courseTitle: course.title,
-                    score: score
-                });
+                // The server derives the user identity and checks the saved quiz score.
+                // Never trust a client-supplied user, email, course title, or score for issuance.
+                const response = await apiClient.post(`${API}/api/certificates/generate`, { courseId: id });
 
                 if (response.data.success) {
                     setIssuedScore(response.data.data.score);
                     setEmailSent(true);
-                    console.log('CERTIFICATE: Saved successfully');
+    
                 }
             } catch (err) {
                 console.error('Error generating certificate:', err);
@@ -92,7 +84,6 @@ const Certificate = () => {
     }, [course, user, id, score]);
 
     const handleLinkedInShare = () => {
-        const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`;
         const message = `I just completed "${course.title}" using MindForgeAI 🚀`;
         const linkedinUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(message)}`;
         window.open(linkedinUrl, '_blank');
