@@ -84,6 +84,18 @@ Use only curriculum material you are allowed to use. Keep the actual source titl
 - BKT parameters are illustrative, not clinically or educationally validated. Mastery scores are estimates and must not be used for high-stakes decisions. Calibrate with anonymized, teacher-reviewed data and provide teacher override.
 - Hindi/Telugu adaptive text uses machine translation and needs educator review. A translated interface is not equivalent to fully localized, curriculum-validated instruction.
 - Teacher rosters are currently maintained by trusted teachers entering student IDs. Production rollout should add school/class enrollment workflows, audit logs and stricter administrative roster assignment.
-- Offline queued answers remain in browser local storage until successfully synced; clearing site data can lose unsynced answers.
+- The service worker caches the static application shell/assets only; authenticated API responses are deliberately never cached there. Adaptive learning stores a per-user plan cache and queued answers in browser local storage, and retries answer submissions after reconnection using idempotency keys. Clearing site data can lose unsynced answers, and full offline sign-in or uncached API functionality is not supported.
 - A teacher should review and approve every imported excerpt and question set. Do not upload private student records into curriculum source chunks.
 - Run the CI checks and test deployed authentication, ownership checks, certificate issuance, RAG citations, translation quality, accessibility and privacy/data-retention settings before using real students.
+
+
+## Local Docker Compose stack
+
+From repository root on Windows PowerShell:
+```powershell
+Copy-Item .env.docker.example .env
+Copy-Item backend/.env.example backend/.env
+# Fill valid frontend Supabase URL/anon key in .env and server credentials in backend/.env
+docker compose up --build
+```
+The frontend is served at http://localhost:4173, API health at http://localhost:5000/health, and MongoDB data persists in a named volume. The sample values are placeholders; real authentication requires a real Supabase project.
