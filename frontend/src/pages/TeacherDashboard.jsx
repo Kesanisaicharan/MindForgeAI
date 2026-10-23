@@ -40,7 +40,7 @@ export default function TeacherDashboard() {
         setLoading(true); setError('');
         try {
             const r = await api.get(`${API}/api/adaptive/teacher/overview`, { params: { rosterId:id } });
-            setOverview(r.data.data || []); setSelectedRoster(id);
+            setOverview(r.data.data?.students || []); setSelectedRoster(id);
         } catch (e) { setError(e.response?.data?.error || 'Could not load class overview.'); }
         finally { setLoading(false); }
     };
