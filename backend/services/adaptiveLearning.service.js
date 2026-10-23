@@ -8,7 +8,7 @@ const getGroqClient = () => {
     if (!process.env.GROQ_API_KEY) return null;
     if (!groqClient) groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
     return groqClient;
-}
+};
 const translationCache = new Map();
 
 const DEFAULT_MASTERY = 0.25;
@@ -114,9 +114,10 @@ const chooseRecommendation = (profile, grade, subject) => {
 
 export const getLearningPlan = async ({ studentId, grade, board, language, subject }) => {
     const profile = await getOrCreateProfile({ studentId, grade, board, language });
+    const effectiveGrade = Number(profile.grade) || 6;
     const mastery = new Map(profile.skills.map(s => [s.topicId, s]));
     const topics = CURRICULUM
-        .filter(t => topicForStudent(t, Number(grade) || profile.grade) && (!subject || subject === 'All' || t.subject === subject))
+        .filter(t => topicForStudent(t, effectiveGrade) && (!subject || subject === 'All' || t.subject === subject))
         .map(t => ({
             id: t.id, grade: t.grade, subject: t.subject, title: t.title,
             description: t.description, prerequisites: t.prerequisites,
@@ -124,7 +125,7 @@ export const getLearningPlan = async ({ studentId, grade, board, language, subje
             attempts: mastery.get(t.id)?.attempts ?? 0,
             status: (mastery.get(t.id)?.masteryProbability ?? DEFAULT_MASTERY) >= 0.75 ? 'mastered' : (mastery.get(t.id)?.masteryProbability ?? DEFAULT_MASTERY) >= 0.4 ? 'in-progress' : 'needs-practice'
         }));
-    const recommendation = chooseRecommendation(profile, Number(grade) || profile.grade, subject);
+    const recommendation = chooseRecommendation(profile, effectiveGrade, subject);
     const requestedLanguage = ['en', 'hi', 'te'].includes(language) ? language : profile.preferredLanguage;
     let localizedTopics = topics;
     let localizedRecommendation = recommendation;
