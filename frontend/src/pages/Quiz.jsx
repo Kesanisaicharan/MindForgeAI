@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../lib/api';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle, Loader2, Trophy } from 'lucide-react';
 
@@ -18,7 +18,7 @@ const Quiz = () => {
         const fetchQuiz = async () => {
             try {
                 const API = import.meta.env.VITE_API_URL;
-                const response = await axios.post(`${API}/api/quiz/generate`, 
+                const response = await apiClient.post(`${API}/api/quiz/generate`, 
                     { courseId },
                     { timeout: 15000 } // Add 15 second timeout to prevent infinite loading
                 );
