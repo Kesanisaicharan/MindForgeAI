@@ -20,7 +20,7 @@ const Generate = () => {
         setError('');
 
         try {
-            const API = import.meta.env.VITE_API_URL;
+            const API = import.meta.env.VITE_API_URL || '';
             const response = await apiClient.post(`${API}/api/ai/generate`, {
                 prompt,
                 userId: user?.id || user?.uid || 'anonymous'
