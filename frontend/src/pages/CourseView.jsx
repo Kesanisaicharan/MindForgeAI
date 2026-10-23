@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../lib/api';
 import { motion } from 'framer-motion';
 import { BookOpen, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
@@ -15,7 +15,7 @@ const CourseView = () => {
         const fetchCourse = async () => {
             try {
                 const API = import.meta.env.VITE_API_URL;
-                const response = await axios.get(`${API}/api/ai/course/${id}`);
+                const response = await apiClient.get(`${API}/api/ai/course/${id}`);
                 if (response.data.success) {
                     setCourse(response.data.data);
                 } else {
