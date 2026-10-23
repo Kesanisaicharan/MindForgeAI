@@ -1,7 +1,6 @@
 import CurriculumChunk from '../models/CurriculumChunk.model.js';
 import { answerFromCurriculum } from '../services/curriculumRag.service.js';
 import { basename, extname } from 'node:path';
-import CurriculumChunk from '../models/CurriculumChunk.model.js';
 import { chunkText, extractDocumentText } from '../services/curriculumIngestion.service.js';
 
 export const addCurriculumChunk = async (req, res) => {
