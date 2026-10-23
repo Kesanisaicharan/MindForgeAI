@@ -50,12 +50,19 @@ export const answerFromCurriculum = async ({ query, grade, board, subject, langu
         citations: [], grounded: false
     };
     const citations = sources.map((s, i) => ({ marker: `S${i + 1}`, title: s.sourceTitle, section: s.title, url: s.sourceUrl, page: s.page, chunkId: s.id }));
-    const fallback = () => ({
-        answer: `AI explanation is temporarily unavailable. The following approved excerpts matched your question; review them with your teacher if needed:\n\n${sources.slice(0, 3).map((s, i) => `[S${i + 1}] ${s.title} — ${String(s.text).slice(0, 1200)}`).join('\n\n')}`,
+    const fallback = () => {
+        const intro = language === 'te'
+            ? 'AI వివరణ తాత్కాలికంగా అందుబాటులో లేదు. మీ ప్రశ్నకు సరిపోలిన ఆమోదించిన పాఠ్యాంశ భాగాలు ఇవి:'
+            : language === 'hi'
+                ? 'AI व्याख्या अस्थायी रूप से उपलब्ध नहीं है। आपके प्रश्न से मेल खाने वाले स्वीकृत पाठ्यांश ये हैं:'
+                : 'AI explanation is temporarily unavailable. These approved excerpts matched your question:';
+        return ({
+        answer: `${intro}\n\n${sources.slice(0, 3).map((s, i) => `[S${i + 1}] ${s.title} — ${String(s.text).slice(0, 1200)}`).join('\n\n')}`,
         citations,
         grounded: true,
         generatedByAI: false
-    });
+        });
+    };
     const client = getGroqClient();
     if (!client) return fallback();
 
