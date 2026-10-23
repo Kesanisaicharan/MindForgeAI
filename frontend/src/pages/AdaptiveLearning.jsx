@@ -121,7 +121,7 @@ const AdaptiveLearning = () => {
             answerIndex: selectedOption
         };
         try {
-            const response = await axios.post(`${api}/api/adaptive/attempt`, payload);
+            const response = await apiClient.post(`${api}/api/adaptive/attempt`, payload);
             setFeedback(response.data.data);
             setSelected(null);
             await loadPlan();
