@@ -21,14 +21,69 @@ export default function TeacherDashboard() {
     const [documentFile, setDocumentFile] = useState(null);
     const [documentMeta, setDocumentMeta] = useState({ grade: 6, board: 'CBSE', subject: 'Mathematics', language: 'en', sourceTitle: '', sourceUrl: '', page: '' });
     const [uploadingDocument, setUploadingDocument] = useState(false);
+    const [assessmentTopics, setAssessmentTopics] = useState([]);
+    const [teacherAssessments, setTeacherAssessments] = useState([]);
+    const [assessmentResults, setAssessmentResults] = useState(null);
+    const [creatingAssessment, setCreatingAssessment] = useState(false);
+    const [assessmentForm, setAssessmentForm] = useState({
+        title: '', rosterId: '', grade: 6, board: 'CBSE', subject: 'Mathematics',
+        language: 'en', topicIds: [], dueAt: ''
+    });
 
     const loadRosters = async () => {
         try {
             const r = await api.get(`${API}/api/adaptive/teacher/rosters`);
-            setRosters(r.data.data || []);
+            const rosterData = r.data.data || [];
+            setRosters(rosterData);
+            setAssessmentForm((current) => ({ ...current, rosterId: current.rosterId || rosterData[0]?._id || '' }));
         } catch (e) { setError(e.response?.data?.error || 'Teacher access is required. Configure your teacher role first.'); }
     };
     useEffect(() => { if (user) loadRosters(); }, [user]);
+
+    const loadTeacherAssessments = async () => {
+        try {
+            const [topicsResponse, assessmentsResponse] = await Promise.all([
+                api.get(`${API}/api/adaptive/teacher/assessment-topics`, {
+                    params: { grade: assessmentForm.grade, subject: assessmentForm.subject }
+                }),
+                api.get(`${API}/api/adaptive/teacher/assessments`)
+            ]);
+            setAssessmentTopics(topicsResponse.data.data || []);
+            setTeacherAssessments(assessmentsResponse.data.data || []);
+        } catch (e) {
+            setError(e.response?.data?.error || 'Could not load assessment tools.');
+        }
+    };
+    useEffect(() => { if (user) loadTeacherAssessments(); }, [user, assessmentForm.grade, assessmentForm.subject]);
+
+    const createAssessment = async (event) => {
+        event.preventDefault();
+        setError(''); setMessage(''); setCreatingAssessment(true); setAssessmentResults(null);
+        try {
+            const payload = {
+                ...assessmentForm,
+                dueAt: assessmentForm.dueAt ? new Date(assessmentForm.dueAt).toISOString() : null
+            };
+            const response = await api.post(`${API}/api/adaptive/teacher/assessments`, payload);
+            setTeacherAssessments((current) => [response.data.data, ...current]);
+            setAssessmentForm((current) => ({ ...current, title: '', topicIds: [] }));
+            setMessage(`Assessment created and assigned to ${response.data.data.studentCount} students with ${response.data.data.questionCount} questions.`);
+        } catch (e) {
+            setError(e.response?.data?.error || 'Could not create the assessment.');
+        } finally {
+            setCreatingAssessment(false);
+        }
+    };
+
+    const loadAssessmentResults = async (assessmentId) => {
+        setError('');
+        try {
+            const response = await api.get(`${API}/api/adaptive/teacher/assessments/${assessmentId}/results`);
+            setAssessmentResults(response.data.data);
+        } catch (e) {
+            setError(e.response?.data?.error || 'Could not load assessment results.');
+        }
+    };
 
     const saveRoster = async (e) => {
         e.preventDefault(); setError(''); setMessage('');
@@ -145,6 +200,56 @@ export default function TeacherDashboard() {
                 </label>
                 <button disabled={!documentFile || uploadingDocument} className="md:col-span-2 rounded-xl bg-primary text-white px-5 py-3 font-bold disabled:opacity-50">{uploadingDocument ? 'Extracting and importing…' : 'Extract and import document'}</button>
             </form>
+        </section>
+        <section className="card-glass rounded-2xl p-6 space-y-5">
+            <h2 className="text-xl font-bold">Create and manage assessments</h2>
+            <p className="text-sm text-gray-500">Build a quiz from the reviewed curriculum question bank and assign it to one of your saved class rosters. Correct answers remain on the server until submission.</p>
+            <form onSubmit={createAssessment} className="grid md:grid-cols-2 gap-4">
+                <label className="text-sm font-semibold">Assessment title
+                    <input required maxLength={160} value={assessmentForm.title} onChange={e=>setAssessmentForm({...assessmentForm,title:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700" placeholder="e.g. Fractions checkpoint"/>
+                </label>
+                <label className="text-sm font-semibold">Assign to class
+                    <select required value={assessmentForm.rosterId} onChange={e=>setAssessmentForm({...assessmentForm,rosterId:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700">
+                        <option value="">Choose a roster</option>{rosters.map(r=><option key={r._id} value={r._id}>{r.name} ({r.studentIds.length} students)</option>)}
+                    </select>
+                </label>
+                <label className="text-sm font-semibold">Grade
+                    <select value={assessmentForm.grade} onChange={e=>setAssessmentForm({...assessmentForm,grade:Number(e.target.value),topicIds:[]})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700">{[6,7,8,9,10].map(g=><option key={g} value={g}>Class {g}</option>)}</select>
+                </label>
+                <label className="text-sm font-semibold">Board
+                    <select value={assessmentForm.board} onChange={e=>setAssessmentForm({...assessmentForm,board:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"><option>CBSE</option><option>ICSE</option><option>State Board</option></select>
+                </label>
+                <label className="text-sm font-semibold">Subject
+                    <select value={assessmentForm.subject} onChange={e=>setAssessmentForm({...assessmentForm,subject:e.target.value,topicIds:[]})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"><option>Mathematics</option><option>Science</option><option>Programming</option><option>All</option></select>
+                </label>
+                <label className="text-sm font-semibold">Question language
+                    <select value={assessmentForm.language} onChange={e=>setAssessmentForm({...assessmentForm,language:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"><option value="en">English</option><option value="hi">Hindi</option><option value="te">Telugu</option></select>
+                </label>
+                <label className="text-sm font-semibold">Due date (optional)
+                    <input type="datetime-local" value={assessmentForm.dueAt} onChange={e=>setAssessmentForm({...assessmentForm,dueAt:e.target.value})} className="mt-2 w-full rounded-xl border p-3 bg-white dark:bg-gray-900 dark:border-gray-700"/>
+                </label>
+                <fieldset className="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <legend className="px-2 text-sm font-semibold">Select topics</legend>
+                    {assessmentTopics.length===0 ? <p className="text-sm text-gray-500">No question-bank topics match this grade and subject.</p> : <div className="grid sm:grid-cols-2 gap-2">
+                        {assessmentTopics.map(topic=><label key={topic.id} className="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                            <input type="checkbox" checked={assessmentForm.topicIds.includes(topic.id)} onChange={e=>setAssessmentForm({...assessmentForm,topicIds:e.target.checked?[...assessmentForm.topicIds,topic.id]:assessmentForm.topicIds.filter(id=>id!==topic.id)})} className="mt-1"/>
+                            <span><span className="block font-semibold text-sm">{topic.title}</span><span className="block text-xs text-gray-500">Class {topic.grade} · {topic.questionCount} questions</span></span>
+                        </label>)}
+                    </div>}
+                </fieldset>
+                <button disabled={creatingAssessment || !assessmentForm.rosterId || assessmentForm.topicIds.length===0} className="md:col-span-2 rounded-xl bg-primary text-white px-5 py-3 font-bold disabled:opacity-50">{creatingAssessment ? 'Creating assessment…' : 'Create and assign assessment'}</button>
+            </form>
+            <div className="space-y-3">
+                <h3 className="font-bold">Existing assessments</h3>
+                {teacherAssessments.length===0 ? <p className="text-sm text-gray-500">No assessments have been assigned yet.</p> : teacherAssessments.map(item=><div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div><p className="font-bold">{item.title}</p><p className="text-xs text-gray-500">{item.rosterName} · Class {item.grade} {item.subject} · {item.questionCount} questions · {item.studentCount} students</p><p className="text-xs text-gray-500">{item.dueAt ? `Due ${new Date(item.dueAt).toLocaleString()}` : 'No due date'}</p></div>
+                    <button onClick={()=>loadAssessmentResults(item.id)} className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-semibold">View results</button>
+                </div>)}
+            </div>
+            {assessmentResults && <div className="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-bold">{assessmentResults.assessment.title} — results</h3><p className="text-xs text-gray-500">{assessmentResults.submittedCount} of {assessmentResults.assignedCount} submitted</p></div><button onClick={()=>setAssessmentResults(null)} className="text-sm underline">Close</button></div>
+                {assessmentResults.submissions.length===0 ? <p className="text-sm text-gray-500">No submissions yet.</p> : assessmentResults.submissions.map(result=><div key={result._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-gray-200 dark:border-gray-700 pt-3"><span className="text-xs break-all">{result.studentId}</span><span className="text-sm font-bold">{result.score}% ({result.correctCount}/{result.totalQuestions})</span><span className="text-xs text-gray-500">{new Date(result.submittedAt).toLocaleString()}</span></div>)}
+            </div>}
         </section>
         <section className="card-glass rounded-2xl p-6 space-y-3"><h2 className="text-xl font-bold">Official curriculum references</h2><p className="text-sm text-gray-500">Use official portals to verify the grade, board, edition and language before adding a source. Check the publisher's terms first; linking to a textbook is not permission to republish its text inside an app.</p><ul className="list-disc pl-5 space-y-2 text-primary underline"><li><a href="https://ncert.nic.in/textbook.php" target="_blank" rel="noreferrer">NCERT official textbook portal</a></li><li><a href="https://epathshala.nic.in/epathshala.php?id=Students&ln=en" target="_blank" rel="noreferrer">ePathshala student resources</a></li><li><a href="https://ncert.nic.in/syllabus_nep.php?ln=en" target="_blank" rel="noreferrer">NCERT syllabus resources</a></li></ul></section>
         <section className="card-glass rounded-2xl p-6 space-y-4"><h2 className="text-xl font-bold">Bulk curriculum import (JSON)</h2><p className="text-sm text-gray-500">Prepare a JSON array with title, text, grade, board, subject, language, sourceTitle, sourceUrl and page. Import up to 100 chunks per batch. Only upload teacher-reviewed content you are allowed to use.</p><input type="file" accept=".json,application/json" onChange={importBulkFile} className="block w-full text-sm"/>{bulkChunks.length>0 && <div className="flex items-center justify-between gap-3"><p className="text-sm">{bulkChunks.length} chunks ready to import</p><button onClick={submitBulkImport} className="rounded-xl bg-primary text-white px-5 py-3 font-bold">Import {bulkChunks.length} chunks</button></div>}<details><summary className="cursor-pointer text-sm underline">Show JSON format</summary><pre className="text-xs whitespace-pre-wrap mt-3 p-3 rounded-xl bg-gray-100 dark:bg-gray-900">{JSON.stringify({chunks:[{title:"Fractions",text:"Teacher-reviewed excerpt text",grade:6,board:"CBSE",subject:"Mathematics",language:"en",sourceTitle:"Textbook name",sourceUrl:"https://example.org/source",page:"12"}]},null,2)}</pre></details></section>
