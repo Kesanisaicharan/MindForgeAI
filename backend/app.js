@@ -4,6 +4,7 @@ import aiRoutes from './routes/ai.routes.js';
 import courseRoutes from './routes/courses.routes.js';
 import quizRoutes from './routes/quiz.routes.js';
 import certificateRoutes from './routes/certificate.routes.js';
+import adaptiveLearningRoutes from './routes/adaptiveLearning.routes.js';
 
 const app = express();
 
@@ -14,5 +15,6 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/adaptive', adaptiveLearningRoutes);
 
 export default app;
