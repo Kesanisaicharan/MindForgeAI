@@ -1,18 +1,40 @@
-# Adaptive Learning MVP — MindForgeAI
+# MindForgeAI Adaptive Learning — implementation and setup
 
-This branch adds an initial adaptive-learning module for the Classes 6–10 challenge while preserving the existing course-generation application.
+This branch adds the first integrated adaptive-learning workflow for the Classes 6–10 challenge. It extends the existing React/Express/MongoDB/Groq application.
 
-## What was added
+## Features now wired into this branch
 
-- **Concept-level learner profile:** stores grade, preferred explanation language, topic mastery estimates, attempts, correctness and last-practiced timestamps in MongoDB.
-- **Prerequisite-aware topic map:** a small curriculum catalogue links foundational concepts to later topics so the recommendation can revisit prerequisites first.
-- **Bayesian Knowledge Tracing (BKT)-style updates:** each answer updates an estimated probability that the learner has mastered a concept. The initial parameters are illustrative and must be calibrated against teacher-reviewed classroom data.
-- **Adaptive practice selection:** selects easier, intermediate or harder questions based on estimated mastery, where the available question bank supports that level.
-- **Personalized plan and progress view:** shows topic status, estimated mastery, answer counts, recommended next activity and why it was recommended.
-- **Grade, subject and language controls:** includes Classes 6–10, Mathematics and Science starter topics, and English/Hindi/Telugu interface labels.
-- **Offline resilience:** caches the latest plan and queues answers locally when the network is unavailable; queued attempts are retried the next time the plan loads successfully.
-- **API endpoints:** `GET /api/adaptive/plan/:studentId` and `POST /api/adaptive/attempt`.
-- **Tests:** validates curriculum IDs, question structure and prerequisite references using Node's built-in test runner.
+1. **Curriculum ingestion and retrieval (RAG-style):** teachers can add single reviewed excerpts or import up to 100 JSON chunks at a time. Each chunk is tagged with grade, board, subject, language and source metadata. Student tutor queries retrieve matching excerpts and return source markers/metadata. When no excerpt matches, the tutor explicitly says so rather than inventing a curriculum answer.
+2. **Student learning profile and adaptation:** the learner profile stores concept-level attempts and provisional mastery estimates. A BKT-style update changes mastery estimates after answers, prerequisite relationships influence recommendations, and the question selector uses the estimate to choose a supported difficulty.
+3. **Multilingual support:** the adaptive lesson UI supports English/Hindi/Telugu labels and requests machine translation of topic titles, descriptions, question text/options and feedback for Hindi/Telugu. The curriculum tutor retrieves only content tagged with the selected language. Machine-translated material must be educator-reviewed; if the translation model is unavailable, adaptive content falls back to the original English.
+4. **Teacher dashboard:** teachers can save class rosters using student Supabase UUIDs, view concept-level support indicators for students in their own saved rosters, and add/import reviewed curriculum excerpts. Teacher access requires server-controlled app_metadata.role = "teacher" or a matching TEACHER_USER_IDS environment allowlist.
+5. **Student data security and validation:** protected APIs verify Supabase bearer tokens server-side, learning plans and attempts are scoped to the signed-in student, course list/read/delete/quiz endpoints enforce ownership, teacher routes require teacher access, class overviews are restricted to the teacher's own roster, and certificates require a server-graded quiz score of at least 80%.
+6. **Server-side quiz grading:** correct answers are stored in a private quiz session and are not sent to the browser before submission. The server grades submitted option indices and stores the result; certificate issuance checks the saved result rather than trusting the score in the URL.
+7. **Offline resilience:** the adaptive page caches its latest plan and queues attempts in local storage when the network is unavailable. Queued answers are retried when the plan is loaded after reconnection.
+8. **Tests and CI:** Node tests cover curriculum structure and teacher-role checks. GitHub Actions runs backend tests and a frontend production build on pushes to the feature branch and pull requests to main.
+
+## Environment variables
+
+Backend environment:
+```env
+MONGO_URI=mongodb+srv://...
+GROQ_API_KEY=...
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_ANON_KEY=...
+# Either set the user's server-managed Supabase app_metadata.role to "teacher"
+# or list trusted teacher Supabase user UUIDs here:
+TEACHER_USER_IDS=uuid-one,uuid-two
+PORT=5000
+```
+
+Frontend environment:
+```env
+VITE_API_URL=http://localhost:5000
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=...
+```
+
+Never put a Supabase service-role key, MongoDB credential or Groq secret in frontend environment variables. Do not trust user-editable user_metadata as a teacher role; use server-controlled app_metadata or the backend allowlist.
 
 ## Run locally
 
@@ -20,35 +42,46 @@ Backend:
 ```bash
 cd backend
 npm install
-# Configure MONGO_URI and PORT in your environment as needed
 npm test
-npm start
+npm run dev
 ```
 
 Frontend:
 ```bash
 cd frontend
 npm install
-# Configure VITE_API_URL to point to the backend, e.g. http://localhost:5000
 npm run dev
 ```
 
-Open `/adaptive` after signing in. The existing `/generate` course workflow remains available.
+After signing in:
+- /adaptive — personalized concept practice and progress.
+- /tutor — curriculum-grounded tutor with source citations.
+- /teacher — teacher roster, progress overview and curriculum import (teacher role required).
 
-## Important prototype limitations
+## Curriculum JSON import format
 
-- The bundled question bank is deliberately small and is **not** a complete CBSE, ICSE or State Board syllabus. The board selector currently records a preference; it does not load board-specific official curriculum.
-- The Hindi and Telugu interface labels do not mean every lesson, question or explanation is translated. Content localization should be completed and reviewed by language/subject educators before classroom use.
-- Mastery percentages are model estimates, not definitive judgments about a child. Teachers should be able to review and override learning recommendations.
-- The current teacher insight is a per-learner progress view, not a cross-class teacher/admin dashboard.
-- Offline answers are stored in that browser's local storage until a later successful sync. Clearing browser data can remove unsynced answers.
-- These endpoints are a prototype and do not yet enforce server-side identity/role authorization. Do not deploy with real student data until authentication, authorization, validation, rate limits and privacy controls are added.
-- This branch does not claim to implement retrieval-augmented generation (RAG) or a multi-agent system. Those should only be added after curriculum sources, licensing, citations and evaluation criteria are defined.
+The teacher dashboard accepts a JSON array or an object with a chunks array, up to 100 items per import. Each item uses:
+```json
+{
+  "title": "Fractions",
+  "text": "Teacher-reviewed curriculum excerpt text...",
+  "grade": 6,
+  "board": "CBSE",
+  "subject": "Mathematics",
+  "language": "en",
+  "sourceTitle": "Actual textbook or curriculum document title",
+  "sourceUrl": "https://official-or-licensed-source.example/path",
+  "page": "12"
+}
+```
+Use only curriculum material you are allowed to use. Keep the actual source title, page/section and a valid HTTPS URL where available. Add separate translated excerpts for hi and te so the RAG tutor can retrieve reliable content in those languages.
 
-## Suggested next production steps
+## Important limitations before classroom deployment
 
-1. Import teacher-approved curriculum and question banks for each grade, board, subject and language.
-2. Add server-side authorization so a student can only read/write their own profile and teachers can only see assigned classes.
-3. Evaluate BKT parameters and recommendations with anonymized, educator-reviewed pilot data.
-4. Add an educator dashboard, intervention history and human override controls.
-5. Add accessible content, translated explanations, safe content filtering and privacy/data-retention policies.
+- **The repository does not bundle a complete official CBSE, ICSE or State Board syllabus.** The existing adaptive question catalogue is a small demonstration bank and is not board-specific. Teachers must import and verify official/licensed materials for the desired grade, board, subject and language. The tutor's retrieval is board/language-filtered once those excerpts are imported.
+- BKT parameters are illustrative, not clinically or educationally validated. Mastery scores are estimates and must not be used for high-stakes decisions. Calibrate with anonymized, teacher-reviewed data and provide teacher override.
+- Hindi/Telugu adaptive text uses machine translation and needs educator review. A translated interface is not equivalent to fully localized, curriculum-validated instruction.
+- Teacher rosters are currently maintained by trusted teachers entering student IDs. Production rollout should add school/class enrollment workflows, audit logs and stricter administrative roster assignment.
+- Offline queued answers remain in browser local storage until successfully synced; clearing site data can lose unsynced answers.
+- A teacher should review and approve every imported excerpt and question set. Do not upload private student records into curriculum source chunks.
+- Run the CI checks and test deployed authentication, ownership checks, certificate issuance, RAG citations, translation quality, accessibility and privacy/data-retention settings before using real students.
