@@ -51,7 +51,7 @@ export const submitQuiz = async (req, res) => {
         const session = await QuizSession.findOne({ _id: quizId, userId: req.user.id });
         if (!session) return res.status(404).json({ success: false, error: 'Quiz session not found.' });
         if (session.submitted) return res.status(409).json({ success: false, error: 'This quiz has already been submitted.' });
-        if (answers.length !== session.questions.length || answers.some(a => !Number.isInteger(a) || a < 0)) {
+        if (answers.length !== session.questions.length || answers.some((a, index) => !Number.isInteger(a) || a < 0 || a >= session.questions[index].options.length)) {
             return res.status(400).json({ success: false, error: 'Submit one valid option index for every question.' });
         }
         let correct = 0;
