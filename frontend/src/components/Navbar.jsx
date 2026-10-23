@@ -58,6 +58,7 @@ const Navbar = () => {
                             <Link to="/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">Dashboard</Link>
                             <Link to="/generate" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">Generate</Link>
                             <Link to="/adaptive" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium flex items-center gap-1"><BookOpen size={16}/> Adaptive Learning</Link>
+                            <Link to="/tutor" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">Curriculum Tutor</Link>
                         </>
                     )}
                     
@@ -84,6 +85,8 @@ const Navbar = () => {
                                     <Link to="/generate" onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Generate</Link>
                                     <Link to="/dashboard" onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Dashboard</Link>
                                     <Link to="/adaptive" onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Adaptive Learning</Link>
+                                    <Link to="/tutor" onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Curriculum Tutor</Link>
+                                    <Link to="/teacher" onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Teacher Dashboard</Link>
                                     <Link to="/dashboard#certificates" onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Certificates</Link>
                                     <Link to="/settings" onClick={() => setDropdownOpen(false)} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Settings</Link>
                                     <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2">
