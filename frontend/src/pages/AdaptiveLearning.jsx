@@ -62,7 +62,7 @@ const AdaptiveLearning = () => {
     const [error, setError] = useState('');
     const t = copy[language] || copy.en;
     const studentId = getStudentId(user);
-    const api = import.meta.env.VITE_API_URL;
+    const api = import.meta.env.VITE_API_URL || '';
 
     const loadPlan = useCallback(async () => {
         setLoading(true);
