@@ -2,7 +2,13 @@ import LearningProfile from '../models/LearningProfile.model.js';
 import { CURRICULUM, getQuestion, getTopic } from '../data/adaptiveCurriculum.js';
 import Groq from 'groq-sdk';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+// Initialize lazily so backend tests and non-AI features work without external credentials.
+let groqClient;
+const getGroqClient = () => {
+    if (!process.env.GROQ_API_KEY) return null;
+    if (!groqClient) groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    return groqClient;
+}
 const translationCache = new Map();
 
 const DEFAULT_MASTERY = 0.25;
@@ -26,7 +32,9 @@ export const getOrCreateProfile = async ({ studentId, grade = 6, board = 'CBSE',
 };
 
 // A compact Bayesian Knowledge Tracing update. This is a starter model and must be calibrated with real, reviewed assessment data.
-const updateBKT = (prior, correct) => {
+export const updateMasteryProbability = (prior, correct) => {
+    if (typeof correct !== 'boolean') throw new TypeError('correct must be a boolean');
+    if (!Number.isFinite(prior) || prior < 0 || prior > 1) throw new RangeError('prior mastery must be between 0 and 1');
     const likelihoodKnown = correct ? 1 - SLIP : SLIP;
     const likelihoodUnknown = correct ? GUESS : 1 - GUESS;
     const denominator = prior * likelihoodKnown + (1 - prior) * likelihoodUnknown;
@@ -37,11 +45,13 @@ const updateBKT = (prior, correct) => {
 
 const translatePayload = async (payload, language) => {
     if (language === 'en') return payload;
+    const client = getGroqClient();
+    if (!client) return payload;
     const cacheKey = `${language}:${JSON.stringify(payload)}`;
     if (translationCache.has(cacheKey)) return translationCache.get(cacheKey);
     const targetLanguage = language === 'hi' ? 'Hindi' : 'Telugu';
     try {
-        const response = await groq.chat.completions.create({
+        const response = await client.chat.completions.create({
             model: 'llama-3.3-70b-versatile',
             temperature: 0,
             max_tokens: 1800,
@@ -161,7 +171,7 @@ export const getLearningPlan = async ({ studentId, grade, board, language, subje
 };
 
 export const submitLearningAttempt = async ({ studentId, grade, board, language, topicId, questionId, answerIndex }) => {
-    if (!studentId || !topicId || !questionId || !Number.isInteger(Number(answerIndex)) || Number(answerIndex) < 0) {
+    if (!studentId || !topicId || !questionId || !Number.isInteger(answerIndex) || answerIndex < 0) {
         const error = new Error('studentId, topicId, questionId, and integer answerIndex are required.');
         error.status = 400;
         throw error;
@@ -174,7 +184,7 @@ export const submitLearningAttempt = async ({ studentId, grade, board, language,
         throw error;
     }
 
-    if (Number(answerIndex) >= question.options.length) {
+    if (answerIndex >= question.options.length) {
         const error = new Error('answerIndex is outside the available options.');
         error.status = 400;
         throw error;
@@ -187,8 +197,8 @@ export const submitLearningAttempt = async ({ studentId, grade, board, language,
         skill = profile.skills.find(s => s.topicId === topicId);
     }
 
-    const isCorrect = Number(answerIndex) === question.answerIndex;
-    skill.masteryProbability = updateBKT(skill.masteryProbability, isCorrect);
+    const isCorrect = answerIndex === question.answerIndex;
+    skill.masteryProbability = updateMasteryProbability(skill.masteryProbability, isCorrect);
     skill.attempts += 1;
     if (isCorrect) skill.correct += 1;
     skill.lastPracticedAt = new Date();
