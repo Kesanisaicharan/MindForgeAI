@@ -13,19 +13,9 @@ import AdaptiveLearning from './pages/AdaptiveLearning';
 import CurriculumTutor from './pages/CurriculumTutor';
 import TeacherDashboard from './pages/TeacherDashboard';
 import AssignedAssessments from './pages/AssignedAssessments';
-
-// Placeholders for remaining pages
-const Profile = () => <div className="p-10 text-gray-900 dark:text-white"><h1 className="text-3xl font-bold">Profile</h1></div>;
-const Settings = () => (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-gray-900 dark:text-white">
-        <h1 className="text-4xl font-extrabold mb-6">Settings</h1>
-        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-500 p-6 rounded-2xl border border-yellow-300 dark:border-yellow-700 max-w-lg text-center shadow-lg">
-            <h2 className="text-2xl font-bold mb-2">Development Mode</h2>
-            <p className="text-lg">The Settings page is currently in development. New configuration options will be available soon.</p>
-        </div>
-    </div>
-);
-const ResetPassword = () => <div className="p-10 text-gray-900 dark:text-white min-h-screen flex items-center justify-center">Full Page Reset Password</div>;
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
