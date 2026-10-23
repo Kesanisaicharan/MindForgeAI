@@ -64,8 +64,9 @@ const AssignedAssessments = () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
-    const [uiLanguage, setUiLanguage] = useState('en');
+    const [uiLanguage, setUiLanguage] = useState(() => localStorage.getItem('mindforge-language') || 'en');
     const t = copy[uiLanguage] || copy.en;
+    useEffect(() => { localStorage.setItem('mindforge-language', uiLanguage); }, [uiLanguage]);
 
     const loadAssessments = useCallback(async () => {
         setLoading(true);
