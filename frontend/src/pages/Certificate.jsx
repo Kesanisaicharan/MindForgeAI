@@ -60,7 +60,7 @@ const Certificate = () => {
                 hasGenerated.current = true;
                 setGenerating(true);
 
-                const API = import.meta.env.VITE_API_URL;
+                const API = import.meta.env.VITE_API_URL || '';
                 // The server derives the user identity and checks the saved quiz score.
                 // Never trust a client-supplied user, email, course title, or score for issuance.
                 const response = await apiClient.post(`${API}/api/certificates/generate`, { courseId: id });
