@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../lib/api';
 import { motion } from 'framer-motion';
-import { Book, PlusCircle, ArrowRight, Loader2, Award } from 'lucide-react';
+import { Book, PlusCircle, ArrowRight, Loader2, Award, ClipboardList } from 'lucide-react';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -94,6 +94,14 @@ const Dashboard = () => {
                     <PlusCircle size={20} />
                     New Course
                 </button>
+            </div>
+
+            <div className="mb-10 rounded-2xl border border-primary/20 bg-primary/5 p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-start gap-3">
+                    <ClipboardList className="text-primary mt-1" size={26}/>
+                    <div><h2 className="text-xl font-bold">Teacher-assigned assessments</h2><p className="text-sm text-gray-500 mt-1">Take class assessments and review your results.</p></div>
+                </div>
+                <button onClick={() => navigate('/assessments')} className="rounded-xl bg-primary text-white px-5 py-3 font-bold inline-flex items-center justify-center gap-2">View assessments <ArrowRight size={18}/></button>
             </div>
 
             {/* Courses Section */}
