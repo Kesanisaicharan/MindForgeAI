@@ -10,10 +10,14 @@ const clamp = (n, min = 0, max = 1) => Math.min(max, Math.max(min, n));
 
 export const getOrCreateProfile = async ({ studentId, grade = 6, board = 'CBSE', language = 'en' }) => {
     const safeGrade = Math.min(10, Math.max(6, Number(grade) || 6));
+    const safeLanguage = ['en', 'hi', 'te'].includes(language) ? language : 'en';
     return LearningProfile.findOneAndUpdate(
         { studentId },
-        { $setOnInsert: { studentId, grade: safeGrade, board, preferredLanguage: ['en','hi','te'].includes(language) ? language : 'en', skills: [], attempts: [] } },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        {
+            $set: { grade: safeGrade, board: board || 'CBSE', preferredLanguage: safeLanguage },
+            $setOnInsert: { studentId, skills: [], attempts: [] }
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true }
     );
 };
 
