@@ -66,6 +66,7 @@ export const gradeAssessment = (questions, answers) => {
         return {
             topicId: question.topicId,
             questionId: question.questionId,
+            question: question.prompt,
             selectedAnswer: question.options[answers[index]],
             correctAnswer: question.options[question.correctAnswerIndex],
             explanation: question.explanation || '',
