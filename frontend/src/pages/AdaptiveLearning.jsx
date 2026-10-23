@@ -118,7 +118,9 @@ const AdaptiveLearning = () => {
         const payload = {
             studentId, grade: Number(grade), board, language,
             topicId: recommendation.topicId, questionId: recommendation.question.id,
-            answerIndex: selectedOption
+            subject,
+            answerIndex: selectedOption,
+            clientAttemptId: globalThis.crypto?.randomUUID?.() || `attempt-${Date.now()}-${Math.random().toString(36).slice(2)}`
         };
         try {
             const response = await apiClient.post(`${api}/api/adaptive/attempt`, payload);
