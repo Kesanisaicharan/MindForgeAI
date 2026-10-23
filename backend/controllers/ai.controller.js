@@ -4,7 +4,7 @@ import Course from '../models/Course.model.js';
 // ✅ COURSE GENERATION
 export const generateCourse = async (req, res) => {
     try {
-        const { prompt, userId } = req.body;
+        const { prompt } = req.body;
 
         if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
             return res.status(400).json({ error: 'Prompt is required' });
@@ -16,7 +16,7 @@ export const generateCourse = async (req, res) => {
             title: courseData.Title,
             description: courseData.Description,
             modules: courseData.Modules,
-            userId: userId || 'anonymous'
+            userId: req.user.id
         });
 
         const savedCourse = await newCourse.save();
@@ -44,6 +44,9 @@ export const generateQuiz = async (req, res) => {
 
         if (!course) {
             return res.status(404).json({ error: 'Course not found' });
+        }
+        if (course.userId !== req.user.id) {
+            return res.status(403).json({ error: 'You can only quiz on your own courses.' });
         }
 
         console.log("Course found:", course.title);
