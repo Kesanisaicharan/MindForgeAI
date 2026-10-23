@@ -7,7 +7,7 @@ import { BookOpen, BrainCircuit, CheckCircle2, CircleAlert, Languages, Loader2, 
 const copy = {
     en: {
         title: 'Adaptive Learning', subtitle: 'A learning path that responds to what you know.',
-        grade: 'Class', board: 'Syllabus', language: 'Interface language', subject: 'Subject',
+        grade: 'Class', board: 'Board preference (demo bank)', language: 'Interface language', subject: 'Subject',
         all: 'All subjects', math: 'Mathematics', science: 'Science', programming: 'Programming',
         next: 'Recommended next', start: 'Practice this concept', submit: 'Check answer', nextQ: 'Load next activity',
         mastered: 'Mastered', practice: 'Needs practice', progress: 'Topics mastered', attempts: 'Answers submitted',
@@ -20,7 +20,7 @@ const copy = {
     },
     hi: {
         title: 'अनुकूली शिक्षण', subtitle: 'आपकी समझ के अनुसार बदलता सीखने का मार्ग।',
-        grade: 'कक्षा', board: 'पाठ्यक्रम', language: 'इंटरफ़ेस भाषा', subject: 'विषय',
+        grade: 'कक्षा', board: 'बोर्ड वरीयता (डेमो)', language: 'इंटरफ़ेस भाषा', subject: 'विषय',
         all: 'सभी विषय', math: 'गणित', science: 'विज्ञान', programming: 'प्रोग्रामिंग',
         next: 'अगली अनुशंसा', start: 'इस विषय का अभ्यास करें', submit: 'उत्तर जाँचें', nextQ: 'अगली गतिविधि',
         mastered: 'सीखा गया', practice: 'अभ्यास आवश्यक', progress: 'सीखे गए विषय', attempts: 'जवाब',
@@ -33,7 +33,7 @@ const copy = {
     },
     te: {
         title: 'అడాప్టివ్ లెర్నింగ్', subtitle: 'నీకు తెలిసిన దాని ఆధారంగా మారే అభ్యాస మార్గం.',
-        grade: 'తరగతి', board: 'సిలబస్', language: 'ఇంటర్‌ఫేస్ భాష', subject: 'విషయం',
+        grade: 'తరగతి', board: 'బోర్డు ఎంపిక (డెమో)', language: 'ఇంటర్‌ఫేస్ భాష', subject: 'విషయం',
         all: 'అన్ని విషయాలు', math: 'గణితం', science: 'సైన్స్', programming: 'ప్రోగ్రామింగ్',
         next: 'తదుపరి సిఫార్సు', start: 'ఈ అంశాన్ని అభ్యసించు', submit: 'జవాబు చెక్ చేయి', nextQ: 'తదుపరి కార్యకలాపం',
         mastered: 'నేర్చుకున్నవి', practice: 'మరింత అభ్యాసం', progress: 'పూర్తైన అంశాలు', attempts: 'సమాధానాలు',
