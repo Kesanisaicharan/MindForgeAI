@@ -5,7 +5,8 @@ import { chunkText, extractDocumentText } from '../services/curriculumIngestion.
 
 export const addCurriculumChunk = async (req, res) => {
     try {
-        const { title, text, grade, board, subject, language = 'en', sourceTitle, sourceUrl = '', page = '' } = req.body;
+        const body = req.body || {};
+        const { title, text, grade, board, subject, language = 'en', sourceTitle, sourceUrl = '', page = '' } = body;
         if (!title?.trim() || !text?.trim() || !sourceTitle?.trim() || !subject?.trim()) {
             return res.status(400).json({ success: false, error: 'title, text, subject and sourceTitle are required.' });
         }
@@ -31,7 +32,8 @@ export const addCurriculumChunk = async (req, res) => {
 
 export const askCurriculumTutor = async (req, res) => {
     try {
-        const { query, grade, board, subject, language = 'en' } = req.body;
+        const body = req.body || {};
+        const { query, grade, board, subject, language = 'en' } = body;
         if (typeof query !== 'string' || !query.trim() || query.length > 1500) return res.status(400).json({ success: false, error: 'Question must be between 1 and 1500 characters.' });
         if (!Number.isInteger(Number(grade)) || Number(grade) < 6 || Number(grade) > 10) {
             return res.status(400).json({ success: false, error: 'grade must be between 6 and 10.' });
@@ -49,7 +51,7 @@ export const askCurriculumTutor = async (req, res) => {
 
 export const addCurriculumBulk = async (req, res) => {
     try {
-        const chunks = req.body.chunks;
+        const chunks = req.body?.chunks;
         if (!Array.isArray(chunks) || chunks.length < 1 || chunks.length > 100) {
             return res.status(400).json({ success: false, error: 'chunks must be an array containing 1 to 100 items.' });
         }
@@ -57,6 +59,9 @@ export const addCurriculumBulk = async (req, res) => {
         const allowedLanguages = ['en', 'hi', 'te'];
         const docs = [];
         for (const item of chunks) {
+            if (!item || typeof item !== 'object' || Array.isArray(item)) {
+                return res.status(400).json({ success: false, error: 'Each curriculum chunk must be a JSON object.' });
+            }
             const grade = Number(item.grade);
             if (!item.title?.trim() || !item.text?.trim() || !item.subject?.trim() || !item.sourceTitle?.trim()
                 || !Number.isInteger(grade) || grade < 6 || grade > 10
@@ -97,7 +102,8 @@ export const listCurriculumSources = async (req, res) => {
 
 export const uploadCurriculumFile = async (req, res) => {
     try {
-        const { grade, board, subject, language = 'en', sourceTitle, sourceUrl = '', page = '' } = req.body;
+        const body = req.body || {};
+        const { grade, board, subject, language = 'en', sourceTitle, sourceUrl = '', page = '' } = body;
         const numericGrade = Number(grade);
         if (!req.file) return res.status(400).json({ success: false, error: 'Select a PDF, TXT, or HTML file.' });
         if (!Number.isInteger(numericGrade) || numericGrade < 6 || numericGrade > 10) {
