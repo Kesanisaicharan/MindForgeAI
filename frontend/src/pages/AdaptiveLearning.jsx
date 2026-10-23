@@ -52,7 +52,7 @@ const AdaptiveLearning = () => {
     const { user } = useAuth();
     const [grade, setGrade] = useState(6);
     const [board, setBoard] = useState('CBSE');
-    const [language, setLanguage] = useState('en');
+    const [language, setLanguage] = useState(() => localStorage.getItem('mindforge-language') || 'en');
     const [subject, setSubject] = useState('All');
     const [plan, setPlan] = useState(null);
     const [selected, setSelected] = useState(null);
@@ -61,6 +61,7 @@ const AdaptiveLearning = () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const t = copy[language] || copy.en;
+    useEffect(() => { localStorage.setItem('mindforge-language', language); }, [language]);
     const studentId = getStudentId(user);
     const api = import.meta.env.VITE_API_URL || '';
 
