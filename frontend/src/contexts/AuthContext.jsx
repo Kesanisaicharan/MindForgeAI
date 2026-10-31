@@ -24,11 +24,12 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const loginWithGoogle = async () => {
-        try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-            });
-            if (error) throw error;
+    try {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin },
+        });
+        if (error) throw error;
         } catch (error) {
             console.error('Error logging in:', error.message);
         }

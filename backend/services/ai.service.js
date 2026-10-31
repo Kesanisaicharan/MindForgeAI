@@ -1,11 +1,27 @@
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
+// Initialize Groq client only if API key is provided; otherwise use a mock client
+const groq = process.env.GROQ_API_KEY ? new Groq({
     apiKey: process.env.GROQ_API_KEY
-});
+}) : {
+    // Mock object with the same interface used in the code
+    chat: {
+        completions: {
+            create: async () => ({
+                choices: [{
+                    message: { content: JSON.stringify({ Title: "Demo Course", Description: "Demo description", Modules: [] }) }
+                }]
+            })
+        }
+    }
+};
 
 export const generateCourseFromPrompt = async (prompt) => {
-    const systemPrompt = `You are an expert AI educator. Generate a structured educational course based on the given prompt.
+    if (!process.env.GROQ_API_KEY) {
+    console.warn("GROQ_API_KEY not set, returning mock course data.");
+    return { Title: "Demo Course", Description: "Demo description", Modules: [] };
+}
+const systemPrompt = `You are an expert AI educator. Generate a structured educational course based on the given prompt.
 The output MUST be a valid JSON object following this EXACT structure:
 {
   "Title": "Course Title",
@@ -42,7 +58,16 @@ Ensure there are exactly 5 to 8  large modules. Return ONLY this JSON without an
 };
 
 export const generateQuizFromCourse = async (courseTitle, trimmedContent) => {
-    const systemPrompt = `You are a STRICT AI Quiz Generator.
+    if (!process.env.GROQ_API_KEY) {
+    console.warn("GROQ_API_KEY not set, returning mock quiz data.");
+    return [{
+        question: "Sample question?",
+        options: ["A", "B", "C", "D"],
+        answer: "A",
+        explanation: "Sample explanation"
+    }];
+}
+const systemPrompt = `You are a STRICT AI Quiz Generator.
 
 SYSTEM GUARDRAIL:
 - You must generate questions ONLY from the provided content.

@@ -12,10 +12,21 @@ export const generateCourse = async (req, res) => {
 
         const courseData = await generateCourseFromPrompt(prompt);
 
+        // Map with fallbacks to support both uppercase and lowercase AI JSON output
+        const titleVal = courseData.Title || courseData.title || 'Untitled Course';
+        const descVal = courseData.Description || courseData.description || 'No description provided';
+        const rawModules = courseData.Modules || courseData.modules || [];
+        
+        const mappedModules = rawModules.map(m => ({
+            Title: m.Title || m.title || 'Untitled Module',
+            Explanation: m.Explanation || m.explanation || '',
+            KeyPoints: m.KeyPoints || m.keyPoints || m.Keypoints || m.keypoints || []
+        }));
+
         const newCourse = new Course({
-            title: courseData.Title,
-            description: courseData.Description,
-            modules: courseData.Modules,
+            title: titleVal,
+            description: descVal,
+            modules: mappedModules,
             userId: userId || 'anonymous'
         });
 
