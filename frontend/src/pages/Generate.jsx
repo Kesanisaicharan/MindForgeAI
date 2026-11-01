@@ -39,7 +39,7 @@ const Generate = () => {
 
             const courseId = response.data?.data?._id;
             if (response.data?.success && courseId) {
-                navigate(`/course/${courseId}`);
+                navigate(`/course/${courseId}`, { state: { course: response.data.data } });
             } else {
                 setError(response.data?.error || 'The server returned an invalid course response. Please try again.');
             }
