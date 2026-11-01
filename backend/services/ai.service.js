@@ -1,10 +1,16 @@
 import Groq from 'groq-sdk';
 
 const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
+    apiKey: process.env.GROQ_API_KEY,
+    timeout: 60000,
+    maxRetries: 1
 });
 
 export const generateCourseFromPrompt = async (prompt) => {
+    if (!process.env.GROQ_API_KEY) {
+        throw new Error('GROQ_API_KEY is not configured');
+    }
+
     const systemPrompt = `You are an expert AI educator. Generate a structured educational course based on the given prompt.
 The output MUST be a valid JSON object following this EXACT structure:
 {
@@ -18,26 +24,27 @@ The output MUST be a valid JSON object following this EXACT structure:
     }
   ]
 }
-Ensure there are exactly 5 to 8  large modules. Return ONLY this JSON without any markdown formatting or extra text.`;
+Ensure there are exactly 5 to 8 large modules. Return ONLY this JSON without any markdown formatting or extra text.`;
 
     const response = await groq.chat.completions.create({
         messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt }
         ],
-        model: "llama-3.3-70b-versatile",
+        model: 'llama-3.3-70b-versatile',
         temperature: 0.7,
         max_tokens: 3000,
-        response_format: { type: "json_object" }
+        response_format: { type: 'json_object' }
     });
 
     const completionBody = response.choices[0]?.message?.content;
+    if (!completionBody) throw new Error('AI provider returned an empty response');
+
     try {
-        const jsonResponse = JSON.parse(completionBody);
-        return jsonResponse;
+        return JSON.parse(completionBody);
     } catch (err) {
-        console.error("Failed to parse AI output:", err);
-        throw new Error("Invalid AI generated content format");
+        console.error('Failed to parse AI output:', err);
+        throw new Error('Invalid AI generated content format');
     }
 };
 
@@ -46,15 +53,13 @@ export const generateQuizFromCourse = async (courseTitle, trimmedContent) => {
 
 SYSTEM GUARDRAIL:
 - You must generate questions ONLY from the provided content.
-- If you generate questions about "Photosynthesis", "Evaporation", or "General Biology" and it is NOT in the content, you have FAILED.
 - Ground your questions in specific facts from the modules.
 
 CRITICAL RULES:
 1. Generate questions ONLY from the given course content.
 2. DO NOT use any external or general knowledge.
 3. Each question MUST include at least one keyword EXACTLY from the content.
-4. If a question can be answered without the content, DO NOT include it.
-5. If content is insufficient to generate 5 unique questions, return exactly: "INSUFFICIENT_DATA"
+4. If content is insufficient to generate 5 unique questions, return exactly: "INSUFFICIENT_DATA"
 
 COURSE CONTENT:
 ${trimmedContent}
@@ -74,32 +79,25 @@ FORMAT (STRICT JSON ONLY):
 
     try {
         const response = await groq.chat.completions.create({
-            messages: [
-                { role: 'system', content: systemPrompt }
-            ],
-            model: "llama-3.3-70b-versatile",
+            messages: [{ role: 'system', content: systemPrompt }],
+            model: 'llama-3.3-70b-versatile',
             temperature: 0.1,
             max_tokens: 1000
         });
 
-        const content = response.choices[0].message.content.trim();
-        
-        if (content.includes("INSUFFICIENT_DATA")) {
-            return { error: "INSUFFICIENT_DATA" };
-        }
+        const content = response.choices[0]?.message?.content?.trim();
+        if (!content) throw new Error('AI provider returned an empty quiz response');
+        if (content.includes('INSUFFICIENT_DATA')) return { error: 'INSUFFICIENT_DATA' };
 
         try {
             return JSON.parse(content);
         } catch (e) {
-            console.error("Failed to parse AI quiz JSON:", e);
-            // Fallback: try to find the array in the text
             const match = content.match(/\[[\s\S]*\]/);
             if (match) return JSON.parse(match[0]);
             throw e;
         }
-
     } catch (err) {
-        console.error("Failed to parse AI output or reach API:", err);
-        throw new Error("Invalid AI generated quiz format or timeout");
+        console.error('Failed to generate quiz:', err);
+        throw new Error('Invalid AI generated quiz format or timeout');
     }
 };
