@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { BookOpen, CheckCircle, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
@@ -9,11 +9,20 @@ const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 const CourseView = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [course, setCourse] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const location = useLocation();
+    const [course, setCourse] = useState(() => location.state?.course || null);
+    const [loading, setLoading] = useState(() => !location.state?.course);
     const [error, setError] = useState('');
 
     useEffect(() => {
+        const cachedCourse = location.state?.course;
+        if (cachedCourse && String(cachedCourse._id) === String(id)) {
+            setCourse(cachedCourse);
+            setLoading(false);
+            setError('');
+            return undefined;
+        }
+
         const controller = new AbortController();
 
         const fetchCourse = async () => {
@@ -51,7 +60,7 @@ const CourseView = () => {
         }
 
         return () => controller.abort();
-    }, [id]);
+    }, [id, location.state]);
 
     if (loading) {
         return (
