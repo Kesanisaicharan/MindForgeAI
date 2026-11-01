@@ -8,7 +8,16 @@ import certificateRoutes from './routes/certificate.routes.js';
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
+
+// Public health check for deployment diagnostics.
+app.get('/health', (_req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        service: 'MindForgeAI API',
+        timestamp: new Date().toISOString()
+    });
+});
 
 app.use('/api/ai', aiRoutes);
 app.use('/api/courses', courseRoutes);
