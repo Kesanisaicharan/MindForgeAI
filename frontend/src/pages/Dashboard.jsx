@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import api from '../lib/api';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Book, PlusCircle, ArrowRight, Loader2, Award } from 'lucide-react';
@@ -33,7 +34,7 @@ const Dashboard = () => {
                 const API = import.meta.env.VITE_API_URL;
                 const [coursesRes, certsRes] = await Promise.all([
                     axios.get(`${API}/api/courses/user/${activeUserId}`),
-                    axios.get(`${API}/api/certificates/${activeUserId}`)
+                    api.get(`/api/certificates/${activeUserId}`)
                 ]);
 
                 if (coursesRes.data.success) {
@@ -168,7 +169,7 @@ const Dashboard = () => {
                                     <p className="text-gray-400 text-sm mb-2">Score: <span className="text-green-400 font-bold">{cert.score}%</span> • Issued: {new Date(cert.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <button
-                                    onClick={() => navigate.open(cert.certificateUrl || `/certificate/${cert.courseId}?score=${cert.score}`, '_blank')}
+                                    onClick={() => navigate(`/certificate/${cert.courseId}`)}
                                     className="bg-primary/20 hover:bg-primary/40 text-primary border border-primary/30 px-4 py-2 rounded-lg text-sm font-bold transition-all"
                                 >
                                     View Certificate
