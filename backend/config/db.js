@@ -6,7 +6,10 @@ const connectDB = async () => {
         console.log(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
         console.error(`Error: ${error.message}`);
-        process.exit(1);
+        // Do not exit process; continue running so health endpoint works
+        // Optionally, could retry later or use a mock DB
+        // For now, we simply return without exiting
+        return;
     }
 };
 

@@ -1,14 +1,30 @@
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
+let groq;
+if (process.env.GROQ_API_KEY) {
+  groq = new Groq({
     apiKey: process.env.GROQ_API_KEY,
     timeout: 60000,
     maxRetries: 1
-});
+  });
+} else {
+  groq = null; // fallback will handle missing key
+}
 
 export const generateCourseFromPrompt = async (prompt) => {
     if (!process.env.GROQ_API_KEY) {
-        throw new Error('GROQ_API_KEY is not configured');
+        // Development fallback: return a simple mock course
+        return {
+            Title: 'Mock Course',
+            Description: 'A placeholder course generated without AI.',
+            Modules: [
+                {
+                    Title: 'Introduction',
+                    Explanation: 'This is a mock module.',
+                    KeyPoints: ['Mock point 1', 'Mock point 2']
+                }
+            ]
+        };
     }
 
     const systemPrompt = `You are an expert AI educator. Generate a structured educational course based on the given prompt.
@@ -49,6 +65,41 @@ Ensure there are exactly 5 to 8 large modules. Return ONLY this JSON without any
 };
 
 export const generateQuizFromCourse = async (courseTitle, trimmedContent) => {
+    if (!process.env.GROQ_API_KEY) {
+        // Development fallback: return a simple mock quiz
+        return [
+            {
+                question: 'What is the first module about?',
+                options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                answer: 'Option A',
+                explanation: 'Mock explanation referencing Introduction.'
+            },
+            {
+                question: 'Which keyword appears in the course?',
+                options: ['Keyword1', 'Keyword2', 'Keyword3', 'Keyword4'],
+                answer: 'Keyword1',
+                explanation: 'Mock explanation with keyword.'
+            },
+            {
+                question: 'What is the second mock question?',
+                options: ['A', 'B', 'C', 'D'],
+                answer: 'B',
+                explanation: 'Mock explanation.'
+            },
+            {
+                question: 'Another mock question?',
+                options: ['1', '2', '3', '4'],
+                answer: '3',
+                explanation: 'Mock explanation.'
+            },
+            {
+                question: 'Final mock question?',
+                options: ['True', 'False', 'Maybe', 'Unknown'],
+                answer: 'True',
+                explanation: 'Mock explanation.'
+            }
+        ];
+    }
     const systemPrompt = `You are a STRICT AI Quiz Generator.
 
 SYSTEM GUARDRAIL:

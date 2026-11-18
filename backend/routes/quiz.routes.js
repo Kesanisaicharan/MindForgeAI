@@ -1,8 +1,9 @@
 import express from 'express';
-import { generateQuiz } from '../controllers/ai.controller.js';
+import { createQuiz, submitQuiz } from '../controllers/quiz.controller.js';
 
 const router = express.Router();
 
-router.post('/generate', generateQuiz);
+router.post('/generate', createQuiz);
+router.post('/:quizId/submit', submitQuiz);
 
 export default router;

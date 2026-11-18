@@ -4,11 +4,15 @@ import aiRoutes from './routes/ai.routes.js';
 import courseRoutes from './routes/courses.routes.js';
 import quizRoutes from './routes/quiz.routes.js';
 import certificateRoutes from './routes/certificate.routes.js';
+import { authenticate } from './middleware/auth.js';
 
 const app = express();
 
-app.use(cors());
+// Set CORS_ORIGIN (comma-separated) in production to restrict browser access to the frontend.
+const origins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim());
+app.use(cors(origins ? { origin: origins } : undefined));
 app.use(express.json({ limit: '1mb' }));
+app.use(authenticate);
 
 // Public health check for deployment diagnostics.
 app.get('/health', (_req, res) => {

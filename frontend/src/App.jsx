@@ -8,6 +8,7 @@ import Generate from './pages/Generate';
 import CourseView from './pages/CourseView';
 import Quiz from './pages/Quiz';
 import Certificate from './pages/Certificate';
+import Verify from './pages/Verify';
 import Home from './pages/Home'; // Properly importing the new Home.jsx
 
 // Placeholders for remaining pages
@@ -33,6 +34,7 @@ function App() {
           <main className="container mx-auto px-4 py-8 max-w-7xl">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/verify/:certId" element={<Verify />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Protected Routes */}

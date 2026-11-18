@@ -1,101 +1,59 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Award, Loader2, MailCheck, Share2 } from 'lucide-react';
+import { Award, Loader2, MailCheck, Share2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../lib/api';
 
 const Certificate = () => {
     const { id } = useParams();
-    const location = useLocation();
+    const [params] = useSearchParams();
+    const quizId = params.get('quiz'); // set when arriving from a passed quiz
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Extract score from URL query params
-    const searchParams = new URLSearchParams(location.search);
-    const score = Number(searchParams.get('score')) || 100;
+    const [cert, setCert] = useState(null);
+    const [email, setEmail] = useState(null);
+    const [state, setState] = useState('loading'); // loading | ready | missing | error
+    const [message, setMessage] = useState('');
+    const ran = useRef('');
 
-    const [course, setCourse] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [emailSent, setEmailSent] = useState(false);
-    const [generating, setGenerating] = useState(false);
-    const hasGenerated = useRef(false);
-
-    // RESET generation state when course ID or search params (score/timestamp) change
+    // Issue the certificate for a passed quiz, or open the one already earned for this course.
     useEffect(() => {
-        console.log('CERTIFICATE: Route changed, resetting generation state.');
-        hasGenerated.current = false;
-        setEmailSent(false);
-        setCourse(null);
-        setLoading(true);
-    }, [id, location.search]);
-
-    // 1. Fetch Course Data
-    useEffect(() => {
-        const fetchCourse = async () => {
+        const key = `${id}|${quizId}|${user?.id}`;
+        if (!user || ran.current === key) return;
+        ran.current = key;
+        (async () => {
             try {
-                const API = import.meta.env.VITE_API_URL;
-                const response = await axios.get(`${API}/api/ai/course/${id}`);
-                if (response.data.success) {
-                    setCourse(response.data.data);
+                if (quizId) {
+                    const res = await api.post('/api/certificates/generate', {
+                        quizId, userId: user.id, email: user.email,
+                        userName: user.user_metadata?.full_name || user.email,
+                    });
+                    setCert(res.data.data);
+                    setEmail(res.data.email);
+                } else {
+                    const res = await api.get(`/api/certificates/${user.id}`);
+                    const found = res.data.data.find((c) => String(c.courseId) === id);
+                    if (!found) return setState('missing');
+                    setCert(found);
                 }
+                setState('ready');
             } catch (err) {
-                console.error('Failed to fetch course:', err);
-            } finally {
-                setLoading(false);
+                setMessage(err.response?.data?.error || 'Could not load the certificate.');
+                setState('error');
             }
-        };
+        })();
+    }, [id, quizId, user]);
 
-        if (id) fetchCourse();
-    }, [id]);
-
-    // 2. Generate Certificate & Send Email (Guarded)
-    useEffect(() => {
-        const generate = async () => {
-            if (hasGenerated.current || !course || !user) return;
-
-            try {
-                hasGenerated.current = true;
-                setGenerating(true);
-
-                const activeUserId = user._id || user.id || user.uid || 'anonymous';
-                console.log("📧 Attempting to send email to:", user.email);
-
-                const API = import.meta.env.VITE_API_URL;
-                const response = await axios.post(`${API}/api/certificates/generate`, {
-                    userId: activeUserId,
-                    userName: user?.user_metadata?.full_name || user?.displayName || 'Valued Student',
-                    email: user?.email, // Added user email
-                    courseId: id,
-                    courseTitle: course.title,
-                    score: score
-                });
-
-                if (response.data.success) {
-                    setEmailSent(true);
-                    console.log('CERTIFICATE: Saved successfully');
-                }
-            } catch (err) {
-                console.error('Error generating certificate:', err);
-                hasGenerated.current = false; // Allow retry if it failed
-            } finally {
-                setGenerating(false);
-            }
-        };
-
-        if (course && user) {
-            generate();
-        }
-    }, [course, user, id, score]);
+    const verifyUrl = cert ? `${window.location.origin}/verify/${cert.certificateId}` : '';
 
     const handleLinkedInShare = () => {
-        const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`;
-        const message = `I just completed "${course.title}" using MindForgeAI 🚀`;
-        const linkedinUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(message)}`;
-        window.open(linkedinUrl, '_blank');
+        const message = `I just completed "${cert.courseTitle}" using MindForgeAI. Verify it: ${verifyUrl}`;
+        window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(message)}`, '_blank');
     };
 
-    if (loading || !course) {
+    if (state === 'loading') {
         return (
             <div className="flex justify-center items-center min-h-[60vh]">
                 <Loader2 className="animate-spin text-primary" size={48} />
@@ -103,12 +61,26 @@ const Certificate = () => {
         );
     }
 
+    if (state !== 'ready') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {state === 'missing' ? 'No certificate for this course yet' : message}
+                </h2>
+                <p className="text-gray-500 dark:text-gray-400">Pass the course quiz with 80% or more to earn one.</p>
+                <button onClick={() => navigate(`/quiz/${id}`)} className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-secondary transition-all">Take the Quiz</button>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-4xl mx-auto p-4 py-10">
-            {emailSent && (
+            {email && (
                 <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl flex items-center justify-center gap-3">
                     <MailCheck size={20} />
-                    <span>Your achievement has been saved to your dashboard!</span>
+                    <span>{email.sent
+                        ? `Certificate saved to your dashboard${email.reason === 'already_sent' ? '.' : ` and emailed to ${user.email}.`}`
+                        : 'Certificate saved to your dashboard. We could not send the email this time.'}</span>
                 </div>
             )}
 
@@ -129,16 +101,16 @@ const Certificate = () => {
 
                     <p className="text-xl text-gray-600 mb-4 italic">This is to certify that</p>
                     <h2 className="text-4xl font-extrabold text-primary mb-8 underline decoration-gray-300 underline-offset-8">
-                        {user?.user_metadata?.full_name || 'Valued Student'}
+                        {cert.userName}
                     </h2>
 
                     <p className="text-xl text-gray-600 mb-4 italic">has successfully completed the AI-generated course</p>
                     <h3 className="text-3xl font-bold text-gray-800 mb-8 max-w-2xl px-10">
-                        {course.title}
+                        {cert.courseTitle}
                     </h3>
 
                     <p className="text-lg text-gray-500 mb-10">
-                        Achieving a quiz score of <span className="font-bold text-black">{score}%</span> demonstrating excellent comprehension.
+                        Achieving a quiz score of <span className="font-bold text-black">{cert.score}%</span> on the course quiz.
                     </p>
 
                     <div className="flex justify-between w-full mt-10 px-10 items-end">
@@ -155,12 +127,16 @@ const Certificate = () => {
                         </div>
 
                         <div className="text-left border-t-2 border-gray-300 pt-2 w-48">
-                            <p className="font-serif font-bold text-gray-700">{new Date().toLocaleDateString()}</p>
+                            <p className="font-serif font-bold text-gray-700">{new Date(cert.createdAt).toLocaleDateString()}</p>
                             <p className="text-sm text-gray-500">Date Issued</p>
                         </div>
                     </div>
                 </div>
             </motion.div>
+
+            <p className="mt-4 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
+                <ShieldCheck size={16} /> Certificate ID {cert.certificateId} &middot; verify at <a className="text-primary underline" href={verifyUrl}>{verifyUrl}</a>
+            </p>
 
             <div className="mt-12 flex justify-center gap-6">
                 <button
